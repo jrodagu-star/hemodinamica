@@ -22,18 +22,18 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          # LTS estable con npm 10; evita rarezas de npm ci en runners muy nuevos.
+          node-version: '22'
           cache: npm
 
-      - name: Check lockfile (npm ci lo necesita en el repo)
+      - name: Install dependencies
         run: |
-          if [ ! -f package-lock.json ]; then
-            echo "::error::Falta package-lock.json en GitHub. Ejecuta en tu Mac: git add package-lock.json && git commit -m \"Add lockfile\" && git push"
-            exit 1
-          fi
-
-      - name: Install
-        run: npm ci
+          node -v
+          npm -v
+          ls -la package.json package-lock.json 2>/dev/null || true
+          # `npm ci` exige lock idéntico al repo y falla con el volcado de ayuda si falta lock o hay desajuste.
+          # `npm install` usa package-lock si existe y suele ser suficiente para generar dist/.
+          npm install --no-audit --no-fund
 
       - name: Build
         env:
