@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Parámetros Swan‑Ganz — Tabla de referencia</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --muted:#556; --accent:#0b5cff;
+    --border:#e6eef6; --font:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  }
+  body{font-family:var(--font);background:var(--bg);color:#0b1220;margin:18px;}
+  header{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+  h1{font-size:18px;margin:0;color:var(--accent)}
+  p.lead{margin:6px 0 14px 0;color:var(--muted);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--border);padding:12px;border-radius:8px;box-shadow:0 1px 2px rgba(11,17,32,0.04)}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{padding:8px 10px;border:1px solid #eef3f8;text-align:left;vertical-align:middle;font-size:13px}
+  th{background:linear-gradient(180deg,#fbfdff,#f4f8ff);font-weight:700;color:#0b2b4a}
+  .small{font-size:12px;color:var(--muted)}
+  .note{background:#fff8e6;border-left:4px solid #f59e0b;padding:8px;border-radius:6px;margin-top:10px;font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .box{background:#fff;border:1px solid var(--border);padding:10px;border-radius:6px}
+  .key{font-weight:700;color:#0b2b4a}
+  .formula{font-family:monospace;background:#f4f7fb;padding:6px;border-radius:4px;display:inline-block}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  /* Impresión A4 */
+  @media print{
+    body{margin:6mm}
+    header h1{font-size:16px}
+    .card{box-shadow:none;border:1px solid #ddd}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Parámetros medidos con catéter de arteria pulmonar (Swan‑Ganz)</h1>
+</header>
+
+<p class="lead">Tabla de referencia rápida con valores normales y unidades. Valores orientativos para adulto; interpretar siempre en contexto clínico.</p>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Parámetro</th>
+        <th>Valor normal (adulto)</th>
+        <th>Unidad</th>
+        <th>Comentario clínico breve</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Presión auricular derecha (PRA / RAP / CVP)</strong></td>
+        <td>2–8</td>
+        <td>mmHg</td>
+        <td class="small">Refleja precarga derecha; útil para valorar volumen y función derecha.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión ventricular derecha sistólica (PAP derecha síst.)</strong></td>
+        <td>15–25</td>
+        <td>mmHg</td>
+        <td class="small">Elevada en hipertensión pulmonar o sobrecarga de presión derecha.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión ventricular derecha diastólica</strong></td>
+        <td>0–8</td>
+        <td>mmHg</td>
+        <td class="small">Aproximación a presión de llenado derecha.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión arterial pulmonar sistólica (PAPs)</strong></td>
+        <td>15–25</td>
+        <td>mmHg</td>
+        <td class="small">Usada para evaluar presión pulmonar y función derecha.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión arterial pulmonar diastólica (PAPd)</strong></td>
+        <td>8–15</td>
+        <td>mmHg</td>
+        <td class="small">Relacionada con presión capilar pulmonar y PCWP.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión arterial pulmonar media (PAPm)</strong></td>
+        <td>9–18</td>
+        <td>mmHg</td>
+        <td class="small">PAPm ≥20 mmHg sugiere hipertensión pulmonar.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión capilar pulmonar en cuña (PCWP / PAWP)</strong></td>
+        <td>6–12</td>
+        <td>mmHg</td>
+        <td class="small">Estimador de presión aurícula izquierda/llenado izquierdo; >15 sugiere congestión izquierda.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Gasto cardíaco (GC)</strong></td>
+        <td>4–8</td>
+        <td>L/min</td>
+        <td class="small">Medición por termodilución o método continuo.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Índice cardíaco (IC)</strong></td>
+        <td>2.5–4.0</td>
+        <td>L/min/m²</td>
+        <td class="small">GC normalizado por superficie corporal (BSA).</td>
+      </tr>
+
+      <tr>
+        <td><strong>Resistencia vascular sistémica (RVS)</strong></td>
+        <td>800–1200</td>
+        <td>dyn·s·cm⁻⁵</td>
+        <td class="small">Elevada en shock hipovolémico/obstructivo; baja en shock distributivo.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Resistencia vascular pulmonar (RVP)</strong></td>
+        <td>20–130</td>
+        <td>dyn·s·cm⁻⁵</td>
+        <td class="small">Aumentada en hipertensión pulmonar precapilar.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Saturación venosa mixta (SvO₂)</strong></td>
+        <td>60–80</td>
+        <td>%</td>
+        <td class="small">Indicador de equilibrio entrega‑consumo O₂; <60% sugiere bajo GC o mayor extracción.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Contenido venoso mixto de O₂ (CvO₂)</strong></td>
+        <td>~15–20</td>
+        <td>mL O₂/dL sangre</td>
+        <td class="small">Relacionado con Hb y SvO₂; útil para cálculo de extracción.</td>
+      </tr>
+
+      <tr>
+        <td><strong>Presión venosa central respiratoria (variabilidad)</strong></td>
+        <td>—</td>
+        <td>mmHg</td>
+        <td class="small">Registro dinámico; interpretar con ventilación y ciclo respiratorio.</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <div class="grid">
+    <div class="box">
+      <div class="key">Fórmulas útiles</div>
+      <p class="small">Usar unidades consistentes (presiones en mmHg, GC en L/min).</p>
+      <p class="small"><span class="key">Índice cardíaco (IC):</span> <span class="formula">IC = GC / BSA</span></p>
+      <p class="small"><span class="key">RVS:</span> <span class="formula">RVS = (MAP − RAP) / GC × 80</span> <br><span class="small">(MAP en mmHg, RAP = CVP en mmHg; resultado dyn·s·cm⁻⁵)</span></p>
+      <p class="small"><span class="key">RVP:</span> <span class="formula">RVP = (PAPm − PCWP) / GC × 80</span></p>
+    </div>
+
+    <div class="box">
+      <div class="key">Técnica y recomendaciones</div>
+      <ul class="small">
+        <li>Zero del transductor a nivel de la línea media torácica (nivel de la aurícula izquierda).</li>
+        <li>Registrar presiones al <strong>final de la espiración</strong> para minimizar artefactos respiratorios.</li>
+        <li>Confirmar posición del catéter con trazado y/o radiografía (onda de cuña para PCWP).</li>
+        <li>Termodilución: usar bolos de 10 mL de solución fría; repetir 3 veces y promediar.</li>
+        <li>Interpretar siempre en contexto clínico (ventilación mecánica, fármacos vasoactivos, ritmo).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="key">Interpretación clínica rápida</div>
+    <p class="small" style="margin:6px 0 0 0">
+      • <strong>PCWP elevada (>15 mmHg)</strong>: sugiere sobrecarga de presión izquierda / edema pulmonar cardiogénico.<br>
+      • <strong>Bajo GC/IC + RVS alta</strong>: patrón típico de <em>shock cardiogénico</em>.<br>
+      • <strong>SvO₂ baja (&lt;60%)</strong>: baja entrega de O₂ o aumento de extracción; revisar Hb, GC y perfusión.<br>
+      • <strong>PAPm ≥20 mmHg</strong>: considerar hipertensión pulmonar; diferenciar precapilar vs postcapilar con PCWP.
+    </p>
+  </div>
+
+  <p class="small" style="margin-top:10px">Nota: los rangos son orientativos para adultos. Valores pueden variar según edad, comorbilidades y técnicas de medida. Esta hoja está pensada como referencia rápida; las decisiones terapéuticas deben basarse en la evaluación clínica completa y protocolos locales.</p>
+
+</div>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   Activity,
   BookOpen,
@@ -7,63 +7,16 @@ import {
   Layers,
 } from 'lucide-react'
 import { TabButton } from './components/ui.jsx'
-import { computeStats, surfaceAreaM2 } from './lib/hemodynamics.js'
 import { CalculadoraView } from './views/CalculadoraView.jsx'
 import { AtlasView } from './views/AtlasView.jsx'
 import { MethodsView } from './views/MethodsView.jsx'
-import { SupportView } from './views/SupportView.jsx'
-
-const defaultInputs = {
-  weight: 70,
-  height: 170,
-  hb: 10,
-  sao2: 98,
-  pao2: 80,
-  pvo2: 40,
-  svo2: 70,
-  pvco2: 46,
-  paco2: 40,
-  gc: 5.0,
-  fc: 80,
-  pam: 70,
-  pvc: 5,
-  pcp: 10,
-  paps: 25,
-  papd: 12,
-  elwi: 5,
-}
+import { SupportView } from './views/SupportView 17.jsx'
 
 function App() {
   const [activeTab, setActiveTab] = useState('calc')
   const [selectedEduTopic, setSelectedEduTopic] = useState(null)
   const [selectedMethod, setSelectedMethod] = useState(null)
   const [selectedSupport, setSelectedSupport] = useState(null)
-
-  const [inputs, setInputs] = useState(defaultInputs)
-
-  const asc = useMemo(
-    () => surfaceAreaM2(inputs.weight, inputs.height),
-    [inputs.weight, inputs.height],
-  )
-
-  const inputsWithAsc = useMemo(
-    () => ({ ...inputs, asc }),
-    [inputs, asc],
-  )
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    const parsed = parseFloat(value)
-    setInputs((prev) => ({
-      ...prev,
-      [name]: Number.isFinite(parsed) ? parsed : 0,
-    }))
-  }
-
-  const stats = useMemo(
-    () => computeStats(inputsWithAsc),
-    [inputsWithAsc],
-  )
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -119,13 +72,7 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-6xl p-4 md:p-8">
-        {activeTab === 'calc' && (
-          <CalculadoraView
-            inputs={inputsWithAsc}
-            stats={stats}
-            handleInputChange={handleInputChange}
-          />
-        )}
+        {activeTab === 'calc' && <CalculadoraView />}
         {activeTab === 'edu' && (
           <AtlasView
             selectedTopic={selectedEduTopic}

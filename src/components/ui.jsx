@@ -285,7 +285,15 @@ export function SupportCard({
   )
 }
 
-export function MenuCard({ onClick, icon: Icon, title, desc, theme }) {
+const MENU_CARD_THEMES = {
+  blue: { iconWrap: 'bg-blue-50 text-blue-600', footer: 'bg-blue-600' },
+  red: { iconWrap: 'bg-red-50 text-red-600', footer: 'bg-red-600' },
+  violet: { iconWrap: 'bg-violet-50 text-violet-600', footer: 'bg-violet-600' },
+  amber: { iconWrap: 'bg-amber-50 text-amber-700', footer: 'bg-amber-600' },
+}
+
+export function MenuCard({ onClick, icon: Icon, title, desc, theme = 'blue' }) {
+  const t = MENU_CARD_THEMES[theme] ?? MENU_CARD_THEMES.blue
   return (
     <button
       type="button"
@@ -293,9 +301,7 @@ export function MenuCard({ onClick, icon: Icon, title, desc, theme }) {
       className="group flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm transition-all hover:shadow-xl"
     >
       <div className="flex flex-grow flex-col items-center p-10 text-center">
-        <div
-          className={`mb-6 rounded-3xl p-5 ${theme === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}
-        >
+        <div className={`mb-6 rounded-3xl p-5 ${t.iconWrap}`}>
           <Icon size={48} aria-hidden />
         </div>
         <h3 className="mb-4 text-2xl font-black tracking-tighter text-slate-800 uppercase">
@@ -304,7 +310,7 @@ export function MenuCard({ onClick, icon: Icon, title, desc, theme }) {
         <p className="text-sm text-slate-500 italic">{desc}</p>
       </div>
       <div
-        className={`flex items-center justify-center gap-2 p-4 font-bold text-white ${theme === 'blue' ? 'bg-blue-600' : 'bg-red-600'}`}
+        className={`flex items-center justify-center gap-2 p-4 font-bold text-white ${t.footer}`}
       >
         Explorar <ArrowRight size={20} aria-hidden />
       </div>

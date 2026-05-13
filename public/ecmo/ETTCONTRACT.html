@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gasto cardíaco y contractilidad del VI — Manual ETT</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --muted:#4b5563; --accent:#0b5cff;
+      --border:#e5e7eb; --font:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    }
+    body{font-family:var(--font);background:var(--bg);color:#111827;margin:0;padding:24px;line-height:1.55;max-width:980px;margin-inline:auto;}
+    h1,h2,h3,h4{margin:0 0 10px 0;font-weight:600;color:#111827;}
+    h1{font-size:24px;color:var(--accent);}
+    h2{font-size:20px;margin-top:18px;}
+    h3{font-size:17px;margin-top:14px;}
+    h4{font-size:15px;margin-top:10px;}
+    p{margin:4px 0 10px 0;}
+    .muted{color:var(--muted);font-size:14px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px;}
+    .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+    table{width:100%;border-collapse:collapse;margin:8px 0;}
+    th,td{border:1px solid #e5e7eb;padding:6px 8px;font-size:14px;text-align:left;vertical-align:top;}
+    th{background:#f3f4f6;font-weight:600;}
+    ul{margin:4px 0 10px 18px;padding:0;font-size:14px;}
+    li{margin:4px 0;}
+    .formula{font-family:ui-monospace,monospace;background:#f3f4ff;padding:4px 8px;border-radius:4px;font-size:13px;display:inline-block;margin:2px 0;}
+    .tag{display:inline-block;padding:2px 6px;border-radius:999px;font-size:11px;background:#e5f0ff;color:#1d4ed8;margin-right:4px;}
+    .section-label{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;margin-bottom:4px;}
+    .flow{counter-reset:step;margin:0;padding:0;list-style:none;}
+    .flow li{position:relative;padding-left:2.4rem;margin:0 0 12px 0;font-size:14px;}
+    .flow li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:1.75rem;height:1.75rem;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .callout{border-left:4px solid var(--accent);background:#f0f5ff;padding:10px 12px;border-radius:0 8px 8px 0;font-size:14px;margin:10px 0;}
+    .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px;}
+    .img-grid figure{margin:0;background:#fafafa;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+    .img-grid img{width:100%;height:auto;display:block;vertical-align:middle;}
+    .img-grid figcaption{font-size:11px;color:var(--muted);padding:6px 8px;line-height:1.35;}
+    .inline-fig{margin:12px 0;text-align:center;}
+    .inline-fig img{max-width:100%;height:auto;border:1px solid var(--border);border-radius:8px;background:#fff;}
+    .inline-fig figcaption{font-size:12px;color:var(--muted);margin-top:6px;}
+    .fig-float-wrap{margin:14px 0;}
+    .fig-float-wrap::after{content:"";display:table;clear:both;}
+    .fig-float{
+      float:left;width:210px;max-width:38%;margin:4px 14px 8px 0;padding:0;
+      border:1px solid var(--border);border-radius:8px;background:#fafafa;overflow:hidden;
+    }
+    .fig-float--right{float:right;margin:4px 0 8px 14px;}
+    .fig-float--sm{width:150px;max-width:28%;}
+    .fig-float img{display:block;width:100%;height:auto;}
+    .fig-float figcaption{font-size:10px;line-height:1.35;color:var(--muted);padding:6px 8px;margin:0;}
+    .fig-float-text{font-size:14px;line-height:1.55;overflow:hidden;}
+    .fig-float-text p:first-child{margin-top:0;}
+    @media (max-width:640px){
+      .fig-float,.fig-float--right,.fig-float--sm{float:none;width:100%;max-width:100%;margin:10px 0;}
+      .fig-float-text{overflow:visible;}
+    }
+    .lvot-at-scheme{
+      background:linear-gradient(180deg,#f1f5f9,#fff);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px 16px;
+      margin:12px 0 18px;
+      font-size:14px;
+    }
+    .lvot-at-scheme__title{font-weight:700;color:var(--accent);margin:0 0 12px;font-size:15px;}
+    .lvot-at-scheme__row{
+      display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+      margin:8px 0;padding:10px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;
+    }
+    .lvot-at-scheme__arrow{color:var(--accent);font-weight:800;font-size:1.15rem;line-height:1;padding:0 2px;}
+    .lvot-at-scheme .dim{font-family:ui-monospace,monospace;font-size:13px;color:#334155;}
+    .vti-steps{display:flex;flex-direction:column;gap:18px;margin:18px 0 8px;}
+    .vti-step-box{
+      border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px 16px;
+      background:linear-gradient(180deg,#ffffff,#f8fafc);
+      box-shadow:0 2px 8px rgba(15,23,42,.06);
+    }
+    .vti-step-box--1{border-left:4px solid #2563eb;}
+    .vti-step-box--2{border-left:4px solid #0d9488;}
+    .vti-step-box--3{border-left:4px solid #7c3aed;}
+    .vti-step-box--4{border-left:4px solid #ea580c;}
+    .vti-step-head{display:flex;align-items:center;gap:12px;margin:0 0 12px;}
+    .vti-step-badge{
+      flex-shrink:0;min-width:2.25rem;height:2.25rem;padding:0 6px;border-radius:999px;
+      font-size:13px;font-weight:800;color:#fff;display:inline-flex;align-items:center;justify-content:center;
+    }
+    .vti-step-box--1 .vti-step-badge{background:#2563eb;}
+    .vti-step-box--2 .vti-step-badge{background:#0d9488;}
+    .vti-step-box--3 .vti-step-badge{background:#7c3aed;}
+    .vti-step-box--4 .vti-step-badge{background:#ea580c;}
+    .vti-step-title{margin:0;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;}
+    .vti-step-grid{display:grid;grid-template-columns:minmax(140px,240px) 1fr;gap:16px;align-items:start;}
+    .vti-step-media{margin:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;}
+    .vti-step-media img{width:100%;height:auto;display:block;vertical-align:middle;}
+    .vti-step-box--3 .vti-step-media{max-width:200px;}
+    .vti-step-media figcaption{font-size:11px;line-height:1.35;color:var(--muted);padding:6px 8px;margin:0;background:#f8fafc;border-top:1px solid #eef2f7;}
+    .vti-step-body{font-size:14px;line-height:1.55;}
+    .vti-step-body p:first-child{margin-top:0;}
+    .vti-step-stack{margin-bottom:14px;}
+    .vti-step-stack .lvot-at-scheme{margin-top:0;}
+    @media (max-width:720px){
+      .vti-step-grid{grid-template-columns:1fr;}
+      .vti-step-box--3 .vti-step-media{max-width:100%;}
+    }
+    @media print{
+      body{padding:10mm;max-width:none;}
+      .card{box-shadow:none;border-color:#d1d5db;}
+      .img-grid{break-inside:avoid;}
+      .vti-step-box{break-inside:avoid;box-shadow:none;}
+    }
+  </style>
+</head>
+<body>
+
+  <header style="margin-bottom:18px;">
+    <div class="section-label">Manual ETT — uso profesional</div>
+    <h1>Gasto cardíaco y contractilidad del ventrículo izquierdo</h1>
+    <p class="muted">
+      Guía de referencia basada en el flujo de trabajo del documento clínico <em>Gasto cardiaco.docx</em>
+      (ecocardiografía transtorácica): de las mediciones en equipo a las fórmulas y a los índices de
+      contractilidad. Los umbrales son orientativos; confirmar con guías ASE/ESC y protocolo del laboratorio.
+    </p>
+  </header>
+
+  <section class="card">
+    <h2>Flujo lógico: de la medición al resultado</h2>
+    <p class="muted">Seguir el orden ayuda a auditar el cálculo y a localizar errores (ángulo Doppler, trazado VTI, diámetro LVOT, FC).</p>
+    <ol class="flow">
+      <li><strong>Geometría y flujo de salida del VI:</strong> diámetro LVOT (o área equivalente) + VTI en el mismo tracto → <strong>volumen sistólico (VS)</strong>.</li>
+      <li><strong>Frecuencia cardíaca (FC)</strong> en el momento del registro (idealmente promedio del mismo ciclo).</li>
+      <li><strong>Gasto cardíaco (GC):</strong> <span class="formula">GC = VS × FC</span> (ajustar unidades a L/min; ver §1).</li>
+      <li><strong>Índice cardíaco (IC):</strong> normalizar por superficie corporal → <span class="formula">IC = GC / ASC</span>.</li>
+      <li><strong>Contractilidad / función VI (en paralelo):</strong> modo M (Teichholz), biplanos (Simpson), EPSS, estimación visual, dP/dT, volúmenes, índice de Tei — cada método aporta una pieza; no son intercambiables en todos los contextos.</li>
+    </ol>
+    <div class="callout">
+      <strong>Documentación en consola:</strong> conservar capturas de VTI, calibración del diámetro LVOT y planos usados para Simpson facilita la trazabilidad clínica.
+    </div>
+  </section>
+
+  <!-- Sección 1: Medición de VTI y área -->
+  <section class="card">
+    <h2>1. Medición de VTI y área del tracto de salida aórtico (LVOT)</h2>
+
+    <h3>1.1. VTI, área LVOT y GC — cuatro pasos en consola</h3>
+    <p><span class="tag">VTI</span> <strong>IVT / VTI<sub>LVOT</sub></strong></p>
+    <ul>
+      <li><strong>Área LVOT:</strong> medir el <strong>diámetro</strong> en el mismo tracto anatómico que el PW (p. ej. <strong>PEL + zoom</strong>, sístole) y derivar el área según protocolo.</li>
+      <li>Vista apical <strong>5 cámaras (A5C)</strong> alineada al LVOT; <strong>Doppler pulsado (PW)</strong> con muestra justo proximal a la válvula aórtica.</li>
+      <li>Trazar el contorno del espectro <strong>sistólico limpio</strong>; el equipo integra el VTI (unidad habitual: <strong>cm</strong>). En volumen sistólico “fisiológico” muchos laboratorios citan <strong>VTI &gt; 17–18 cm</strong> como orden de magnitud en adultos (depende de FC y gasto basal).</li>
+    </ul>
+
+    <div class="vti-steps">
+      <article class="vti-step-box vti-step-box--1">
+        <header class="vti-step-head">
+          <span class="vti-step-badge">Paso 1</span>
+          <h4 class="vti-step-title">Área del LVOT (círculo en sístole) — diámetro a área</h4>
+        </header>
+        <div class="vti-step-stack">
+          <div class="lvot-at-scheme" role="region" aria-label="Esquema: área trasversal del tracto de salida aórtico">
+            <div class="lvot-at-scheme__title">AT (área trasversal VAo)</div>
+            <div class="lvot-at-scheme__row">
+              <span><strong>Diámetro</strong></span>
+              <span class="lvot-at-scheme__arrow" aria-hidden="true">→</span>
+              <span><strong>Área</strong> (método Teichholz) <span class="dim">(cm²)</span></span>
+            </div>
+            <div class="lvot-at-scheme__row">
+              <span><strong>PEL</strong> &gt; <strong>Modo M + zoom</strong> <span class="dim">(X cm)</span></span>
+              <span class="lvot-at-scheme__arrow" aria-hidden="true">→</span>
+              <span><strong>X cm²</strong> <span class="dim">(sístole)</span></span>
+            </div>
+            <p class="muted" style="margin:10px 0 0;font-size:12px;">PEL: <strong>paraesternal eje largo</strong>; en esa vista se pasa a modo M con zoom para medir el diámetro interno en sístole.</p>
+          </div>
+          <p><span class="tag">Área</span> A partir del <strong>diámetro (D)</strong> en el mismo plano que el PW del LVOT (sístole):</p>
+          <p class="formula">Área<sub>LVOT</sub> = π × (D/2)² &nbsp;&nbsp;(D en cm → Área en cm²)</p>
+          <ul>
+            <li>Mediciones habituales: <strong>PEL (paraesternal eje largo) + zoom</strong> y calibración en borde interno–interno, o <strong>modo M</strong> en el mismo eje para el diámetro en sístole (según protocolo).</li>
+          </ul>
+        </div>
+        <div class="vti-step-grid">
+          <figure class="vti-step-media">
+            <img
+              src="ett-lvot-diametro-tsvi.png"
+              alt="Eje largo parasternal: medición del diámetro TSVI entre ventrículo izquierdo y aorta en sístole."
+              loading="lazy"
+            />
+            <figcaption>TSVI_D (eje largo)</figcaption>
+          </figure>
+          <div class="vti-step-body">
+            <p>
+              El diámetro del LVOT debe medirse en el <strong>mismo tracto anatómico</strong> que el muestreo del PW
+              (habitualmente eje largo parasternal o equivalente con buena resolución axial), en
+              <strong>meso-sístole</strong> y con calibración interno–interno según guía del laboratorio. Un error de
+              milímetros en el diámetro se propaga al cuadrado en el área y altera el GC de forma notable.
+            </p>
+            <p class="muted">
+              Si el plano no es coaxial al LVOT, el diámetro se sobrestima o subestima; repita la medición tras optimizar
+              el plano y el zoom.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="vti-step-box vti-step-box--2">
+        <header class="vti-step-head">
+          <span class="vti-step-badge">Paso 2</span>
+          <h4 class="vti-step-title">Colocación del volumen de muestra (A5C → LVOT)</h4>
+        </header>
+        <div class="vti-step-grid">
+          <figure class="vti-step-media">
+            <img
+              src="ett-lvot-vti-apical5-pw.png"
+              alt="Vista apical 5 cámaras con Doppler pulsado: cursor alineado al LVOT y volumen de muestra proximal a la válvula aórtica."
+              loading="lazy"
+            />
+            <figcaption>Apical 5C + PW en LVOT</figcaption>
+          </figure>
+          <div class="vti-step-body">
+            <p>
+              En la vista apical de cinco cámaras, alinee el eje Doppler con el flujo del tracto de salida del VI y
+              sitúe la muestra <strong>justo proximal a la válvula aórtica</strong> (habitualmente 0,5–1 cm), evitando
+              que la muestra quede en la valva o en la raíz donde el espectro se distorsiona. Ajuste el
+              <strong>ángulo de corrección</strong> al vector de flujo y use un tamaño de muestra acorde al protocolo
+              (p. ej. 5 mm) para equilibrar señal y resolución espacial.
+            </p>
+            <p class="muted">
+              Revise el cine en varios ciclos: arritmias o respiración forzada cambian la posición óptima de la muestra.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="vti-step-box vti-step-box--3">
+        <header class="vti-step-head">
+          <span class="vti-step-badge">Paso 3</span>
+          <h4 class="vti-step-title">Trazado del envolvente sistólico y VTI</h4>
+        </header>
+        <div class="vti-step-grid">
+          <figure class="vti-step-media">
+            <img
+              src="ett-lvot-vti-espectro-trazado.png"
+              alt="Espectro Doppler pulsado del LVOT con trazado del contorno sistólico y VTI en cm."
+              loading="lazy"
+            />
+            <figcaption>Espectro + trazado VTI</figcaption>
+          </figure>
+          <div class="vti-step-body">
+            <p>
+              Con PW a <strong>escala de velocidad adecuada</strong> (evitar aliasing) y ganancia correcta, trace el
+              borde del espectro <strong>sistólico limpio</strong> (sin rellenar ruido ni cortar el pico). El equipo
+              integra la velocidad en el tiempo y muestra el <strong>VTI en cm</strong>; compruebe que el ciclo
+              seleccionado corresponde a una sístole completa y que el ECG de referencia coincide con el registro.
+            </p>
+            <p class="muted">
+              Valores orientativos de VTI en adultos con gasto conservado suelen citarse por encima de 17–18 cm; la
+              interpretación siempre es integrada con FC, área LVOT y clínica.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="vti-step-box vti-step-box--4">
+        <header class="vti-step-head">
+          <span class="vti-step-badge">Paso 4</span>
+          <h4 class="vti-step-title">Integración: VTI + geometría → VS y GC</h4>
+        </header>
+        <div class="vti-step-grid">
+          <figure class="vti-step-media">
+            <img
+              src="ett-lvot-vti-cardiac-output-panel.png"
+              alt="Consola con VTI LVOT, frecuencia cardíaca, volumen sistólico y gasto cardíaco Doppler."
+              loading="lazy"
+            />
+            <figcaption>Panel de gasto (Doppler)</figcaption>
+          </figure>
+          <div class="vti-step-body">
+            <p>
+              Una vez guardados el VTI y el <strong>diámetro o área del LVOT</strong> coherentes con el mismo segmento
+              anatómico, el analizador calcula el volumen sistólico y el gasto (o índice) según su algoritmo. Verifique
+              que la <strong>FC</strong> usada sea la del mismo bucle, revise unidades (L/min vs mL) y contraste con el
+              cálculo manual si procede.
+            </p>
+            <p class="muted">
+              Los nombres en pantalla (p. ej. LVCO, LVSV) dependen del fabricante; no sustituyen el criterio clínico.
+            </p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <h3>1.2. Estimación alternativa del diámetro LVOT (mm) por superficie corporal</h3>
+    <p>Fórmula empírica usada en algunas hojas de trabajo (verificar con curvas locales):</p>
+    <p class="formula">Diámetro estimado (mm) = 5,7 × ASC + 12,1</p>
+    <p class="muted">ASC: área de superficie corporal (m²). Sustituir solo si no hay medición directa fiable.</p>
+
+    <h3>1.3. De VTI + área a GC (cadena completa)</h3>
+    <ul>
+      <li><strong>Volumen sistólico (VS, mL):</strong> <span class="formula">VS ≈ Área<sub>LVOT</sub> (cm²) × VTI (cm)</span> — dimensionalmente cm²×cm = cm³ = mL.</li>
+      <li><strong>Gasto cardíaco (L/min):</strong> <span class="formula">GC = (VS × FC) / 1000</span></li>
+    </ul>
+    <p class="muted">Si existe insuficiencia aórtica significativa o flujo dinámico en LVOT, la validez del método disminuye; valorar otros modos (p. ej. volumetría, otro outflow).</p>
+  </section>
+
+  <!-- Sección 2: Valores normales y gasto cardíaco -->
+  <section class="card">
+    <h2>2. Valores orientativos, resistencias e índice cardíaco</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>2.1. Tabla de referencia (adulto)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Parámetro</th>
+              <th>Valor habitual</th>
+              <th>Unidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Resistencias vasculares sistémicas (orden de magnitud)</td>
+              <td>1600–2400</td>
+              <td>dyn·s·cm<sup>−5</sup></td>
+            </tr>
+            <tr>
+              <td>Volumen sistólico (VS)</td>
+              <td>&gt; 60</td>
+              <td>mL</td>
+            </tr>
+            <tr>
+              <td>VTI aórtico (referencia práctica)</td>
+              <td>&gt; 18</td>
+              <td>cm</td>
+            </tr>
+            <tr>
+              <td>Gasto cardíaco (GC)</td>
+              <td>3–5</td>
+              <td>L/min</td>
+            </tr>
+            <tr>
+              <td>Índice cardíaco (IC)</td>
+              <td>2,4–4,0</td>
+              <td>L/min/m²</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>2.2. Fórmulas centrales</h3>
+        <p><strong>Volumen sistólico y gasto:</strong></p>
+        <p class="formula">GC = VS × FC</p>
+        <p class="muted">Unificar unidades (VS en mL, FC en lpm → dividir por 1000 para L/min).</p>
+        <p><strong>Índice cardíaco:</strong></p>
+        <p class="formula">IC = GC / ASC</p>
+        <h4>Resistencia sistémica (variación tipo “IRVS” en hojas)</h4>
+        <p>Algunas plantillas expresan un índice proporcional a la relación presiones/gasto (no sustituye el cálculo completo de RVS con unidades Wood):</p>
+        <p class="formula">IRVS ≈ (PAM − PVC) × 80 / IC</p>
+        <p class="muted">PAM: presión arterial media (mmHg); PVC: presión venosa central o presión de llenado derecha proxy (mmHg); IC en L/min/m². Contrastar con fórmulas del monitor y unidades del servicio.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección 3: Teichholz -->
+  <section class="card">
+    <h2>3. Método unidimensional de Teichholz (modo M)</h2>
+    <p><span class="tag">Modo M</span> <strong>PEL (paraesternal eje largo, 2D) → modo M Measure</strong></p>
+    <p>Estima volúmenes del VI a partir de diámetros internos en el eje largo parasternal; de ellos se derivan VS, FE aproximada y, con la FC, un GC coherente con esa geometría.</p>
+
+    <h3>3.1. Parámetros medidos (siglas habituales)</h3>
+    <ul>
+      <li><strong>IVSd / IVSs:</strong> grosor septal en diástole / sístole.</li>
+      <li><strong>LVIDd / LVIDs:</strong> diámetro interno del VI en diástole / sístole.</li>
+      <li><strong>LVPWd / LVPWs:</strong> grosor de pared posterior en diástole / sístole.</li>
+    </ul>
+
+    <h3>3.2. Volúmenes, volumen sistólico y gasto</h3>
+    <ul>
+      <li><strong>EDV (VTD):</strong> volumen telediastólico del VI.</li>
+      <li><strong>ESV (VTS):</strong> volumen telesistólico del VI.</li>
+      <li><strong>Volumen sistólico (VS):</strong> <span class="formula">VS = EDV − ESV</span></li>
+      <li><strong>GC (cadena):</strong> <span class="formula">GC = VS × FC</span> (mismas unidades que en §1).</li>
+      <li><strong>FE (Teichholz):</strong> porcentaje de eyección estimado por el algoritmo del equipo.</li>
+      <li><strong>%FS:</strong> fracción de acortamiento del diámetro interno.</li>
+    </ul>
+
+    <h3>3.3. Interpretación orientativa de la FE (Teichholz)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>FE (Teichholz)</th>
+          <th>Interpretación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>&gt; 55%</td>
+          <td>Función sistólica conservada</td>
+        </tr>
+        <tr>
+          <td>45–55%</td>
+          <td>Disfunción leve</td>
+        </tr>
+        <tr>
+          <td>30–44%</td>
+          <td>Disfunción moderada</td>
+        </tr>
+        <tr>
+          <td>&lt; 30%</td>
+          <td>Disfunción severa</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="muted"><strong>Limitaciones:</strong> pierde precisión con VI severamente dilatado, acinesias segmentarias o geometría muy asimétrica; en esos casos priorizar Simpson / 3D y métodos hemodinámicos.</p>
+  </section>
+
+  <!-- Sección 4: Simpson -->
+  <section class="card">
+    <h2>4. Método de Simpson biplano</h2>
+    <p><span class="tag">2D</span> <strong>Simpson biplano (A4C + A2C)</strong></p>
+    <p>Reconstrucción volumétrica del VI con contornos endocárdicos en dos proyecciones ortogonales:</p>
+    <ul>
+      <li><strong>A4C:</strong> apical 4 cámaras.</li>
+      <li><strong>A2C:</strong> apical 2 cámaras.</li>
+    </ul>
+
+    <h3>4.1. Del volumen al gasto</h3>
+    <ul>
+      <li><strong>Volumen sistólico (eyección):</strong> <span class="formula">VS = EDV − ESV</span> (equivalente a <em>VTD − VTS</em> si el equipo etiqueta así los volúmenes).</li>
+      <li><strong>GC:</strong> <span class="formula">GC = VS × FC</span></li>
+    </ul>
+    <p class="muted">Evitar confundir el orden: el volumen eyectado es el <strong>inicial diastólico</strong> menos el <strong>residual sistólico</strong>.</p>
+  </section>
+
+  <!-- Sección 5: EPSS -->
+  <section class="card">
+    <h2>5. EPSS (excursión septal frente al punto E mitral)</h2>
+    <p><span class="tag">EPSS</span> Distancia entre el desplazamiento anterior máximo de la <strong>válvula mitral (punto E)</strong> y el desplazamiento posterior máximo del <strong>tabique interventricular</strong> en modo M o equivalente bien alineado.</p>
+    <p>Refleja relación entre tamaño del VI y acortamiento sistólico longitudinal; sube con disfunción y con ciertas valvulopatías.</p>
+
+    <h3>5.1. Valores de referencia habituales</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>EPSS</th>
+          <th>Interpretación práctica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>&lt; 7 mm</td>
+          <td>Compatible con función conservada (contexto clínico normal)</td>
+        </tr>
+        <tr>
+          <td>&gt; 10 mm</td>
+          <td>Sugiere disfunción del VI (integrar con FE y geometría)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="muted">Puede aumentar con <strong>insuficiencia aórtica</strong> o <strong>estenosis mitral</strong> que alteren la dinámica mitral/septal.</p>
+  </section>
+
+  <!-- Sección 6: Otros métodos -->
+  <section class="card">
+    <h2>6. Otros métodos y parámetros de contractilidad / volumen</h2>
+
+    <h3>6.1. Estimación subjetiva</h3>
+    <p>Valoración visual experta de la thickening y el acortamiento endocárdico en múltiples segmentos; útil como comprobación rápida y debe quedar registrada (ej. “FE visual ~40%”).</p>
+
+    <h3>6.2. Método área–longitud</h3>
+    <p>Combina el área de la cavidad en un plano y la longitud larga del VI para estimar volumen cuando Simpson no es trazable; seguir presets del equipo.</p>
+
+    <h3>6.3. dP/dt desde regurgitación mitral (CW)</h3>
+    <p><span class="tag">dP/dt</span> Estimación indirecta de la <strong>velocidad de ascenso isovolumétrico</strong> de presión en el VI usando la pendiente del espectro continuo de la IM entre dos velocidades de referencia (p. ej. 1 y 3 m/s → ΔP ≈ 12 mmHg en ~20 ms según enseñanza clásica).</p>
+    <ul>
+      <li>Requiere regurgitación mitral <strong>moderada–severa</strong> y espectro <strong>denso</strong> (no saturado).</li>
+      <li>Más validado como apoyo a FEVI que como sustituto aislado; integrar con contractilidad regional.</li>
+    </ul>
+
+    <h3>6.4. Volúmenes de cavidades (2D / 3D)</h3>
+    <p>Volumetría de aurículas y ventrículos para completar el fenotipo hemodinámico (precarga, remodelado, sincronía).</p>
+  </section>
+
+  <!-- Sección 7: Tei -->
+  <section class="card">
+    <h2>7. Índice de Tei (índice de rendimiento miocárdico)</h2>
+    <p><span class="tag">Tei</span> Integra tiempos isovolumétricos y el tiempo de eyección del VI; sensible a disfunción global cuando la FE aún es preservada.</p>
+
+    <h3>7.1. Concepto</h3>
+    <p>Intervalo entre el fin del flujo mitral y el comienzo del flujo mitral del ciclo siguiente, descompuesto en componentes isovolumétricos y eyección (según el protocolo de medición del laboratorio).</p>
+
+    <h3>7.2. Mediciones típicas</h3>
+    <ul>
+      <li><strong>Medición 1 — A4C:</strong> Doppler pulsado del <strong>flujo mitral</strong> con volumen de muestra en anillo mitral; obtener intervalos que permitan derivar <strong>CI</strong> y <strong>RI</strong> isovolumétricos.</li>
+      <li><strong>Medición 2 — A5C:</strong> flujo del <strong>tracto de salida del VI</strong> para medir el <strong>tiempo de eyección (ET / PE)</strong>.</li>
+    </ul>
+
+    <h3>7.3. Cálculo</h3>
+    <p class="formula">Índice de Tei = (CI + RI) / ET</p>
+    <p class="muted">CI: contracción isovolumétrica; RI: relajación isovolumétrica; ET: eyección (misma convención temporal en ambos trazos). El equipo puede automatizar el cálculo.</p>
+  </section>
+
+  <!-- Galería de imágenes del Word -->
+  <section class="card">
+    <h2>Anexo — Figuras del manual original</h2>
+    <p class="muted">
+      Capturas incrustadas en <em>Gasto cardiaco.docx</em> (orden <code>image1.png</code> … <code>image19.png</code>).
+      Se muestran para reproducir el flujo visual del documento; los pies de figura genéricos pueden sustituirse por anotaciones propias del servicio.
+    </p>
+    <div class="img-grid">
+      <figure><img src="ett-gasto-manual/image1.png" alt="Captura manual ETT 1" loading="lazy" /><figcaption>Fig. 1</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image2.png" alt="Captura manual ETT 2" loading="lazy" /><figcaption>Fig. 2</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image3.png" alt="Captura manual ETT 3" loading="lazy" /><figcaption>Fig. 3</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image4.png" alt="Captura manual ETT 4" loading="lazy" /><figcaption>Fig. 4</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image5.png" alt="Captura manual ETT 5" loading="lazy" /><figcaption>Fig. 5</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image6.png" alt="Captura manual ETT 6" loading="lazy" /><figcaption>Fig. 6</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image7.png" alt="Captura manual ETT 7" loading="lazy" /><figcaption>Fig. 7</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image8.png" alt="Captura manual ETT 8" loading="lazy" /><figcaption>Fig. 8</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image9.png" alt="Captura manual ETT 9" loading="lazy" /><figcaption>Fig. 9</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image10.png" alt="Captura manual ETT 10" loading="lazy" /><figcaption>Fig. 10</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image11.png" alt="Captura manual ETT 11" loading="lazy" /><figcaption>Fig. 11</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image12.png" alt="Captura manual ETT 12" loading="lazy" /><figcaption>Fig. 12</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image13.png" alt="Captura manual ETT 13" loading="lazy" /><figcaption>Fig. 13</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image14.png" alt="Captura manual ETT 14" loading="lazy" /><figcaption>Fig. 14</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image15.png" alt="Captura manual ETT 15" loading="lazy" /><figcaption>Fig. 15</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image16.png" alt="Captura manual ETT 16" loading="lazy" /><figcaption>Fig. 16</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image17.png" alt="Captura manual ETT 17" loading="lazy" /><figcaption>Fig. 17</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image18.png" alt="Captura manual ETT 18" loading="lazy" /><figcaption>Fig. 18</figcaption></figure>
+      <figure><img src="ett-gasto-manual/image19.png" alt="Captura manual ETT 19" loading="lazy" /><figcaption>Fig. 19</figcaption></figure>
+    </div>
+  </section>
+
+  <p class="muted" style="text-align:center;font-size:12px;margin-top:24px;">
+    Contenido educativo. Los algoritmos exactos (contornos Simpson, presets strain, unidades de resistencias) dependen del fabricante y de la guía del laboratorio.
+  </p>
+
+</body>
+</html>

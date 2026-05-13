@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guía ECMO VV — Manual operativo de UCI</title>
+<meta name="description" content="Manual esquemático y operativo de ECMO venovenoso para UCI: oxigenación, ventilación, ventilación mecánica protectora, anticoagulación, retirada y checklist." />
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=jetbrains-mono@400,500&display=swap">
+<style>
+/* ===== Tokens ===== */
+:root{
+  --bg:#F4F6F8;
+  --surface:#FFFFFF;
+  --surface-alt:#F9FAFB;
+  --border:#E2E5EA;
+  --border-strong:#C9CED6;
+  --text:#0F172A;
+  --text-muted:#52606D;
+  --text-faint:#8893A2;
+
+  /* Semantic clinical palette */
+  --venous:#1F6FB2;        /* azul drenaje/venoso */
+  --venous-soft:#E4F0FB;
+  --arterial:#C2185B;      /* rosa-rojo retorno/alerta */
+  --arterial-soft:#FCE4EC;
+  --action:#0F8B8D;        /* teal acción/objetivo */
+  --action-soft:#DCF1F1;
+  --caution:#B46B00;       /* ámbar precaución */
+  --caution-soft:#FFF1D6;
+  --success:#2E7D32;
+  --success-soft:#E1F2E2;
+
+  --radius-sm:6px;
+  --radius:12px;
+  --radius-lg:18px;
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 4px 16px rgba(15,23,42,.06);
+  --shadow-lg:0 6px 24px rgba(15,23,42,.08);
+
+  --font-sans:"Satoshi","Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --maxw:1200px;
+  --sticky-head:160px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:var(--sticky-head)}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:var(--font-sans);font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+
+a{color:var(--action);text-decoration:none}
+a:hover{text-decoration:underline}
+strong{font-weight:700}
+code,kbd{font-family:var(--font-mono);font-size:.92em;background:var(--surface-alt);padding:.06em .35em;border-radius:4px;border:1px solid var(--border)}
+
+/* ===== Layout: sticky site header + full-width main ===== */
+.page{max-width:var(--maxw);margin:0 auto}
+
+/* ===== Sticky header (brand + horizontal nav) ===== */
+.site-header{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,.94);
+  backdrop-filter:saturate(160%) blur(12px);
+  -webkit-backdrop-filter:saturate(160%) blur(12px);
+  border-bottom:1px solid var(--border);
+  box-shadow:0 1px 0 rgba(15,23,42,.04);
+}
+.topbar{
+  border-bottom:1px solid var(--border);
+  background:transparent;
+}
+.topbar-inner{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 24px;
+}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:-0.01em}
+.brand .logo{flex:0 0 auto}
+.brand .title{font-size:18px;line-height:1.1}
+.brand .sub{display:block;font-size:12px;color:var(--text-muted);font-weight:500;letter-spacing:.02em;text-transform:uppercase}
+.topbar .meta{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:13px}
+.btn-print{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);
+  padding:8px 12px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;
+}
+.btn-print:hover{background:var(--action-soft);border-color:var(--action);color:var(--action)}
+
+/* ===== Top navigation (horizontal, inside sticky header) ===== */
+.nav-rail{background:rgba(249,250,251,.65)}
+.nav-rail-inner{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;
+  padding:10px 24px 12px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+.nav-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;min-width:0}
+.nav-group + .nav-group{
+  padding-left:16px;margin-left:4px;border-left:1px solid var(--border);
+}
+@media (max-width:640px){
+  .nav-group + .nav-group{padding-left:12px;margin-left:0;margin-top:4px;padding-top:8px;border-left:0;border-top:1px solid var(--border);width:100%}
+}
+.nav-group h4{
+  margin:0;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:700;white-space:nowrap;flex:0 0 auto;
+}
+.nav{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.nav li{margin:0}
+.nav li a{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 11px;border-radius:8px;color:var(--text-muted);
+  font-size:13.5px;font-weight:500;white-space:nowrap;
+}
+.nav li a:hover{background:var(--surface);color:var(--text);text-decoration:none}
+.nav li a.active{background:var(--action-soft);color:var(--action);font-weight:700}
+.nav li a .n{
+  display:inline-grid;place-items:center;
+  width:22px;height:22px;border-radius:6px;
+  background:var(--surface);border:1px solid var(--border);
+  font-family:var(--font-mono);font-size:11px;color:var(--text-muted);
+  flex-shrink:0;
+}
+.nav li a.active .n{background:#fff;border-color:var(--action);color:var(--action)}
+@media (max-width:520px){
+  .nav li a{font-size:13px;padding:7px 9px}
+}
+
+/* ===== Main ===== */
+main{padding:28px 32px 80px;min-width:0}
+@media (max-width: 640px){main{padding:18px 16px 60px}}
+
+section{margin:0 0 56px;scroll-margin-top:var(--sticky-head)}
+section.hero{margin-bottom:40px}
+h1,h2,h3,h4{font-family:var(--font-sans);letter-spacing:-0.015em;color:var(--text);margin:0}
+h1{font-size:clamp(28px,4.2vw,40px);font-weight:900;line-height:1.05}
+h2{font-size:clamp(22px,2.6vw,28px);font-weight:800;line-height:1.15;margin-bottom:6px}
+h3{font-size:18px;font-weight:700;margin:0 0 8px}
+h4{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
+p{margin:0 0 12px}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--action);font-weight:600;margin-bottom:10px;
+}
+.eyebrow::before{content:"";width:18px;height:1px;background:var(--action)}
+
+.lead{color:var(--text-muted);font-size:17px;max-width:62ch}
+
+/* ===== Cards & grids ===== */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);
+}
+.card-flush{padding:0;overflow:hidden}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:880px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  .grid-3.keep-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-4.keep-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){
+  .grid-3.keep-2,.grid-4.keep-2{grid-template-columns:1fr}
+}
+
+/* ===== Chips / badges ===== */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:999px;
+  font-size:13px;font-weight:600;line-height:1;
+  border:1px solid var(--border);background:var(--surface-alt);color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.85}
+.chip.action{background:var(--action-soft);border-color:#B8E0E1;color:#0A6062}
+.chip.venous{background:var(--venous-soft);border-color:#B7D6F0;color:#15517F}
+.chip.arterial{background:var(--arterial-soft);border-color:#F4B7CD;color:#8B154A}
+.chip.caution{background:var(--caution-soft);border-color:#F4D49A;color:#7C4A00}
+.chip.success{background:var(--success-soft);border-color:#BFE2C2;color:#1F5C23}
+.chip.neutral{background:var(--surface-alt);color:var(--text-muted)}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+
+/* ===== Callouts ===== */
+.callout{
+  border-left:3px solid var(--action);
+  background:var(--surface);
+  border-radius:0 var(--radius) var(--radius) 0;
+  padding:14px 16px;display:flex;gap:12px;align-items:flex-start;
+}
+.callout.caution{border-left-color:var(--caution);background:#FFFBF1}
+.callout.alert{border-left-color:var(--arterial);background:#FFF5F8}
+.callout.info{border-left-color:var(--venous);background:#F4F9FD}
+.callout .icn{flex:0 0 auto;margin-top:2px;color:inherit}
+.callout p{margin:0;font-size:14.5px;line-height:1.5}
+.callout p + p{margin-top:6px}
+.callout.caution{color:#5A3700}
+.callout.alert{color:#7B0E40}
+.callout.info{color:#10456C}
+
+/* ===== Hero ===== */
+.hero{
+  background:linear-gradient(135deg,#FFFFFF 0%,#F1F7F7 60%,#E4F0FB 100%);
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:34px 32px;box-shadow:var(--shadow-lg);
+  display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center;
+}
+@media (max-width:880px){.hero{grid-template-columns:1fr;padding:26px 22px}}
+.hero .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+@media (max-width:640px){
+  .hero{padding:22px 18px}
+  .hero h1{font-size:26px}
+  .hero .kpis{grid-template-columns:1fr 1fr}
+  .hero .kpi:nth-child(3){grid-column:1 / -1}
+}
+.hero .kpi{
+  background:rgba(255,255,255,.7);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;
+}
+.hero .kpi .v{font-weight:800;font-size:18px;color:var(--text);font-variant-numeric:tabular-nums}
+.hero .kpi .l{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+
+.diagram-wrap{
+  background:#fff;border:1px solid var(--border);border-radius:14px;
+  padding:14px;box-shadow:var(--shadow);
+}
+.diagram-wrap svg{width:100%;height:auto;display:block}
+
+/* Diagrama de control ECMO VV — dos carriles (oxigenación / CO₂) */
+.cfd-diagram{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.cfd-lane{
+  border-radius:14px;padding:12px 14px 14px;border:1px solid var(--border);
+  box-shadow:var(--shadow);background:var(--surface);
+}
+.cfd-lane-o2{
+  border-color:rgba(31,111,178,.32);
+  background:linear-gradient(165deg,#fff 0%,#f2f8fc 55%,#e8f2fa 100%);
+}
+.cfd-lane-co2{
+  border-color:rgba(180,107,0,.35);
+  background:linear-gradient(165deg,#fff 0%,#fffdf8 55%,#fff6e8 100%);
+}
+.cfd-lane-h{
+  font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:0 0 10px;
+}
+.cfd-lane-o2 .cfd-lane-h{color:var(--venous)}
+.cfd-lane-co2 .cfd-lane-h{color:var(--caution)}
+.cfd-pipeline{
+  display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:8px 10px;
+}
+.cfd-node{
+  flex:1 1 150px;min-width:min(100%,148px);max-width:240px;border-radius:12px;padding:11px 12px;
+  border:1px solid var(--border-strong);background:#fff;box-sizing:border-box;
+}
+.cfd-node-mandos{max-width:280px}
+.cfd-node-k{
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);
+  margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid #e9edf2;
+}
+.cfd-node-mech{
+  text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:88px;
+  background:var(--action-soft);border-color:#9fd5d6;color:#0a6062;font-weight:700;font-size:12.5px;line-height:1.35;
+}
+.cfd-node-out{text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:88px;font-weight:700;font-size:12.5px;line-height:1.35}
+.cfd-node-out-o2{color:#15517f;border-color:#b7d6f0;background:#fafdff}
+.cfd-node-out-co2{color:#7c4a00;border-color:#f4d49a;background:#fffefb}
+.cfd-node-out small{display:block;margin-top:4px;font-size:11px;font-weight:600;color:var(--text-muted)}
+.cfd-mandos-stack{display:flex;flex-direction:column;gap:8px}
+.cfd-mandos-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.cfd-pill{
+  display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;
+  border:1px solid transparent;
+}
+.cfd-pill-blue{background:var(--venous-soft);border-color:#b7d6f0;color:#15517f}
+.cfd-pill-amber{background:var(--caution-soft);border-color:#f4d49a;color:#7c4a00}
+.cfd-thumb-btn{margin:0;padding:0;border:0;background:transparent;cursor:zoom-in;border-radius:8px;line-height:0;flex-shrink:0}
+.cfd-thumb-btn:focus-visible{outline:2px solid var(--action);outline-offset:2px}
+.cfd-thumb{
+  display:block;width:64px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--border-strong);
+  box-shadow:var(--shadow);background:#fff;
+}
+@media(min-width:780px){
+  .cfd-thumb{width:72px;height:50px}
+}
+.cfd-arrow{
+  flex:0 0 auto;align-self:center;display:flex;align-items:center;justify-content:center;color:var(--action);
+  font-size:22px;font-weight:800;line-height:1;padding:6px 2px;user-select:none;
+}
+@media(max-width:720px){
+  .cfd-arrow{width:100%;transform:rotate(90deg);padding:4px 0}
+}
+
+/* Lightbox miniaturas manual ECMO VV */
+.cfd-lightbox{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.88);display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+.cfd-lightbox[hidden]{display:none !important}
+.cfd-lightbox img{max-width:min(96vw,1100px);max-height:90vh;width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.cfd-lightbox-close{position:fixed;top:16px;right:20px;width:44px;height:44px;border:0;border-radius:999px;background:#fff;color:#0f172a;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.cfd-lightbox-close:hover{background:#f1f5f9}
+
+/* ===== Tables ===== */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:0}
+table th,table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+table th{background:var(--surface-alt);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:700}
+table tr:last-child td{border-bottom:0}
+table td .chip{font-size:12px;padding:3px 8px}
+
+/* ===== Step list ===== */
+.steps{counter-reset:step;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+.steps li{
+  position:relative;padding:14px 16px 14px 56px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+}
+.steps li::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;left:14px;top:14px;
+  width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--action-soft);color:var(--action);
+  font-weight:800;font-size:14px;font-family:var(--font-mono);
+}
+.steps li b{display:block;margin-bottom:2px;font-size:15px}
+.steps li span{color:var(--text-muted);font-size:14px}
+
+/* Variant: ordered with priority colors */
+.steps.priority li{padding-left:60px}
+.steps.priority li::before{background:var(--venous-soft);color:var(--venous)}
+.steps.priority li:nth-child(2)::before{background:#EAF6F2;color:#147254}
+.steps.priority li:nth-child(3)::before{background:var(--caution-soft);color:var(--caution)}
+
+/* Horizontal oxygenation adjustment sequence */
+.o2-adjust-flow{
+  display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:10px 8px;margin-top:12px;
+}
+.o2-adjust-flow .o2-step{
+  flex:1 1 200px;min-width:min(100%,240px);max-width:320px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:10px;
+}
+.o2-adjust-flow .o2-step .o2-step-title{
+  display:flex;align-items:flex-start;gap:10px;font-weight:800;font-size:15px;line-height:1.25;color:var(--text);
+}
+.o2-adjust-flow .o2-step .o2-step-title .num{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;background:var(--venous-soft);color:var(--venous);
+  font-family:var(--font-mono);font-size:14px;font-weight:800;
+}
+.o2-adjust-flow .o2-step:nth-child(3) .o2-step-title .num{background:#EAF6F2;color:#147254}
+.o2-adjust-flow .o2-step:nth-child(5) .o2-step-title .num{background:var(--caution-soft);color:var(--caution)}
+.o2-adjust-flow .o2-step img{
+  width:100%;max-height:150px;object-fit:contain;border-radius:8px;border:1px solid var(--border-strong);
+  background:var(--surface-alt);
+}
+.o2-adjust-flow .o2-step p{margin:0;font-size:14px;color:var(--text-muted);line-height:1.5}
+.o2-adjust-flow .o2-step .callout{margin:0;font-size:13px;padding:10px 12px}
+.o2-adjust-flow .o2-step .callout p{margin:0;font-size:13px}
+.o2-arrow{
+  flex:0 0 auto;align-self:center;display:grid;place-items:center;
+  color:var(--action);font-size:26px;font-weight:800;line-height:1;padding:4px 2px;
+  user-select:none;
+}
+@media (max-width:900px){
+  .o2-arrow{transform:rotate(90deg);padding:6px 0;width:100%}
+  .o2-adjust-flow .o2-step{max-width:none}
+}
+
+/* Horizontal weaning / disconnection: 3 steps + 2 GSA checkpoints */
+.disc-flow{
+  display:flex;flex-wrap:wrap;align-items:stretch;justify-content:center;gap:10px 6px;margin-top:10px;
+}
+.disc-flow .disc-step{
+  flex:1 1 200px;min-width:min(100%,200px);max-width:280px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:8px;
+}
+.disc-flow .disc-step .disc-step-head{
+  display:flex;align-items:flex-start;gap:10px;font-weight:800;font-size:15px;line-height:1.25;color:var(--text);
+}
+.disc-flow .disc-step .disc-step-head .num{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;background:var(--action-soft);color:var(--action);
+  font-family:var(--font-mono);font-size:14px;font-weight:800;
+}
+.disc-flow .disc-step:nth-child(5) .disc-step-head .num{background:var(--venous-soft);color:var(--venous)}
+.disc-flow .disc-step:nth-child(9) .disc-step-head .num{background:var(--caution-soft);color:var(--caution)}
+.disc-flow .disc-step p{margin:0;font-size:13.5px;color:var(--text-muted);line-height:1.45}
+.disc-flow .disc-gsa{
+  flex:0 1 150px;min-width:min(100%,130px);max-width:175px;
+  display:flex;flex-direction:column;justify-content:center;gap:6px;
+  background:linear-gradient(135deg,#FFFBF1 0%,#FFF5E6 100%);
+  border:1px dashed #E0A84A;border-radius:12px;padding:12px 10px;text-align:center;
+  box-shadow:var(--shadow);
+}
+.disc-flow .disc-gsa .gsa-label{
+  font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--caution);
+}
+.disc-flow .disc-gsa .gsa-ttl{font-weight:800;font-size:14px;color:#5A3700;line-height:1.2}
+.disc-flow .disc-gsa .gsa-desc{font-size:12.5px;color:#7C4A00;line-height:1.4;margin:0}
+@media (max-width:900px){
+  .disc-flow .disc-step,.disc-flow .disc-gsa{max-width:none}
+}
+
+/* ===== Big chip rows (objectives bar) ===== */
+.objbar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px;
+}
+.objbar .obj{display:flex;flex-direction:column;gap:4px;padding:6px 8px;border-left:3px solid var(--action)}
+.objbar .obj.venous{border-color:var(--venous)}
+.objbar .obj.arterial{border-color:var(--arterial)}
+.objbar .obj.caution{border-color:var(--caution)}
+.objbar .obj .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--text-muted)}
+.objbar .obj .v{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Respirador ECMO VV: programar (izq.) / vigilar (der.) */
+.vm-resp-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;align-items:stretch;
+}
+@media (max-width:780px){
+  .vm-resp-split{grid-template-columns:1fr}
+}
+.vm-resp-split .vm-col{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  box-shadow:var(--shadow);min-width:0;
+}
+.vm-resp-split .vm-col h3{
+  margin:0 0 12px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);
+}
+.vm-resp-split .objbar{margin:0;display:flex;flex-direction:column;gap:10px;padding:12px}
+.vm-resp-split .objbar .obj{margin:0}
+
+/* ===== Checklist ===== */
+.checklist{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.checklist li{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+}
+.checklist li .box{
+  width:18px;height:18px;border:1.5px solid var(--border-strong);border-radius:4px;flex:0 0 auto;margin-top:2px;
+  display:grid;place-items:center;color:var(--action);
+}
+.checklist li input[type=checkbox]{
+  position:absolute;opacity:0;pointer-events:none;
+}
+.checklist li label{cursor:pointer;flex:1;line-height:1.45;font-size:15px}
+.checklist li.checked .box{background:var(--action);border-color:var(--action);color:#fff}
+.checklist li.checked label{color:var(--text-muted);text-decoration:line-through}
+
+/* ===== Algorithm cards ===== */
+.algo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:880px){.algo{grid-template-columns:1fr}}
+.algo-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;box-shadow:var(--shadow);
+}
+.algo-card .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.algo-card .head .pill{
+  font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.04em;
+  padding:4px 8px;border-radius:6px;background:var(--surface-alt);color:var(--text-muted);
+  border:1px solid var(--border);
+}
+.algo-card.hypoxemia .head .pill{background:var(--venous-soft);color:var(--venous);border-color:#BCD8EE}
+.algo-card.hypercapnia .head .pill{background:var(--caution-soft);color:var(--caution);border-color:#EFD49B}
+.algo-card .arrow{
+  display:block;font-family:var(--font-mono);color:var(--text-faint);
+  margin:6px 0;font-size:13px;
+}
+
+/* ===== Timeline (weaning) ===== */
+.timeline{
+  position:relative;display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;
+}
+@media (max-width:980px){.timeline{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.timeline{grid-template-columns:1fr}}
+.tl-step{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px;display:flex;flex-direction:column;gap:6px;position:relative;
+}
+.tl-step .num{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--action-soft);color:var(--action);
+  display:grid;place-items:center;font-weight:800;font-size:14px;font-family:var(--font-mono);
+}
+.tl-step .ttl{font-weight:700;font-size:14.5px;line-height:1.25}
+.tl-step .desc{font-size:13.5px;color:var(--text-muted);line-height:1.45}
+.tl-step .time{
+  font-family:var(--font-mono);font-size:11px;font-weight:700;
+  letter-spacing:.06em;color:var(--caution);text-transform:uppercase;
+}
+
+/* ===== Footer ===== */
+footer{
+  border-top:1px solid var(--border);margin-top:40px;padding:24px 0 0;
+  color:var(--text-muted);font-size:13.5px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+}
+
+/* ===== Print ===== */
+@media print{
+  :root{--bg:#fff}
+  .site-header,.btn-print,.no-print{display:none !important}
+  .page{max-width:100%}
+  main{padding:0}
+  section{break-inside:avoid;page-break-inside:avoid;margin-bottom:24px}
+  .card,.algo-card,.tl-step,.disc-flow .disc-step,.disc-flow .disc-gsa,.steps li,.checklist li,.objbar,.diagram-wrap{
+    box-shadow:none;border:1px solid #ccc;break-inside:avoid;
+  }
+  .hero{box-shadow:none;background:#fff;border:1px solid #ccc}
+  a{color:#000;text-decoration:none}
+  body{font-size:12pt;color:#000}
+  h1{font-size:22pt}h2{font-size:16pt}h3{font-size:13pt}
+}
+
+/* ===== Misc small ===== */
+.muted{color:var(--text-muted)}
+.mono{font-family:var(--font-mono)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--action)}
+.note{font-size:13.5px;color:var(--text-muted)}
+.tag-arrow{color:var(--text-faint);margin:0 .25em}
+ul.tight{margin:0;padding-left:20px}
+ul.tight li{margin:4px 0}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+<!-- ===== Top bar ===== -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <!-- Logo SVG -->
+      <svg class="logo" width="42" height="42" viewBox="0 0 48 48" fill="none" aria-label="Logo ECMO VV">
+        <rect x="1" y="1" width="46" height="46" rx="10" fill="#0F8B8D"/>
+        <!-- Two distinct stylised V letters in white with a small gap -->
+        <path d="M6 14 L13 34 L20 14" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M28 14 L35 34 L42 14" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <div>
+        <div class="title">ECMO VV</div>
+        <span class="sub">Manual operativo UCI</span>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="chip neutral mono" title="Versión">v1.0</span>
+      <button class="btn-print" onclick="window.print()" aria-label="Imprimir guía">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir / PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Navigation (horizontal, sticky with header) ===== -->
+<nav class="nav-rail" aria-label="Navegación del manual">
+  <div class="nav-rail-inner">
+    <div class="nav-group">
+      <h4>Contenido</h4>
+      <ul class="nav">
+        <li><a href="#vista-rapida"><span class="n">0</span>Vista rápida</a></li>
+        <li><a href="#oxigenacion"><span class="n">1</span>Oxigenación</a></li>
+        <li><a href="#ventilacion-co2"><span class="n">2</span>Ventilación / CO₂</a></li>
+        <li><a href="#vm-protectora"><span class="n">3</span>VM protectora</a></li>
+        <li><a href="#anticoagulacion"><span class="n">4</span>Anticoagulación</a></li>
+        <li><a href="#retirada"><span class="n">5</span>Retirada / destete</a></li>
+        <li><a href="#checklist"><span class="n">6</span>Checklist final</a></li>
+      </ul>
+    </div>
+    <div class="nav-group">
+      <h4>Acciones</h4>
+      <ul class="nav">
+        <li><a href="javascript:window.print()"><span class="n">⌘</span>Imprimir / Exportar PDF</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+</header>
+
+<div class="page">
+
+  <!-- ===== Main ===== -->
+  <main>
+
+    <!-- ===== Hero ===== -->
+    <section class="hero" id="top">
+      <div>
+        <div class="eyebrow">Terapia ECMO veno-venosa</div>
+        <h1>Guía operativa de ECMO VV<br/>para Medicina Intensiva</h1>
+        <p class="lead" style="margin-top:14px">
+          Manual esquemático de bolsillo para el ajuste y destete de la oxigenación con membrana extracorpórea
+          venovenosa. Reorganiza el protocolo local en bloques de decisión rápidos.
+        </p>
+
+        <div class="kpis">
+          <div class="kpi"><div class="v">PAFI &gt; 200</div><div class="l">Objetivo oxigenación</div></div>
+          <div class="kpi"><div class="v">P1 ≥ -50 mmHg</div><div class="l">Límite drenaje</div></div>
+          <div class="kpi"><div class="v">TCA 160-180</div><div class="l">Anticoagulación</div></div>
+        </div>
+
+        <div class="chip-row" style="margin-top:18px">
+          <span class="chip action"><span class="dot"></span>Oxigenación = flujo sangre</span>
+          <span class="chip caution"><span class="dot"></span>Ventilación = sweep gas</span>
+          <span class="chip venous"><span class="dot"></span>Azul = drenaje venoso</span>
+          <span class="chip arterial"><span class="dot"></span>Rojo = retorno</span>
+        </div>
+      </div>
+
+      <div class="diagram-wrap" aria-label="Esquema circuito ECMO VV">
+        <!-- ECMO VV schematic -->
+        <svg viewBox="0 0 460 320" role="img" aria-labelledby="ecmoTitle">
+          <title id="ecmoTitle">Esquema ECMO veno-venoso</title>
+          <defs>
+            <linearGradient id="bodyG" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#F5F7FA"/>
+              <stop offset="1" stop-color="#E2E8EE"/>
+            </linearGradient>
+            <marker id="arrV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#1F6FB2"/>
+            </marker>
+            <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#C2185B"/>
+            </marker>
+          </defs>
+
+          <!-- Patient torso (stylized) -->
+          <g transform="translate(50,40)">
+            <rect x="0" y="20" width="120" height="210" rx="38" fill="url(#bodyG)" stroke="#C9CED6"/>
+            <circle cx="60" cy="22" r="22" fill="url(#bodyG)" stroke="#C9CED6"/>
+            <!-- heart -->
+            <path d="M52 95c-10-12 8-22 12-10 4-12 22-2 12 10l-12 14z" fill="#fff" stroke="#C2185B" stroke-width="1.5"/>
+            <!-- lungs -->
+            <path d="M30 110 q-14 28 0 70 q12 0 18-14 V110z" fill="#fff" stroke="#1F6FB2" stroke-width="1.2"/>
+            <path d="M90 110 q14 28 0 70 q-12 0-18-14 V110z" fill="#fff" stroke="#1F6FB2" stroke-width="1.2"/>
+            <text x="60" y="220" text-anchor="middle" font-size="11" fill="#52606D" font-family="Satoshi,Inter,sans-serif">Paciente</text>
+          </g>
+
+          <!-- Drainage cannula (femoral/venoso) -->
+          <path d="M170 200 C 220 200, 240 210, 280 210" stroke="#1F6FB2" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#arrV)"/>
+          <text x="195" y="192" font-size="11" fill="#15517F" font-weight="700" font-family="Satoshi,Inter,sans-serif">Drenaje (femoral)</text>
+
+          <!-- Pump -->
+          <g transform="translate(285,180)">
+            <circle cx="22" cy="22" r="22" fill="#fff" stroke="#1F6FB2" stroke-width="2"/>
+            <path d="M22 8 a14 14 0 1 0 12 21" fill="none" stroke="#1F6FB2" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="22" cy="22" r="3" fill="#1F6FB2"/>
+            <text x="22" y="60" text-anchor="middle" font-size="11" fill="#15517F" font-weight="700" font-family="Satoshi,Inter,sans-serif">Bomba</text>
+            <text x="22" y="74" text-anchor="middle" font-size="10" fill="#52606D" font-family="Satoshi,Inter,sans-serif">RPM · Flujo</text>
+          </g>
+
+          <!-- Oxygenator -->
+          <g transform="translate(355,160)">
+            <rect x="0" y="0" width="70" height="80" rx="10" fill="#fff" stroke="#0F8B8D" stroke-width="2"/>
+            <!-- fibers -->
+            <line x1="10" y1="14" x2="10" y2="66" stroke="#0F8B8D" stroke-width="1"/>
+            <line x1="22" y1="14" x2="22" y2="66" stroke="#0F8B8D" stroke-width="1"/>
+            <line x1="34" y1="14" x2="34" y2="66" stroke="#0F8B8D" stroke-width="1"/>
+            <line x1="46" y1="14" x2="46" y2="66" stroke="#0F8B8D" stroke-width="1"/>
+            <line x1="58" y1="14" x2="58" y2="66" stroke="#0F8B8D" stroke-width="1"/>
+            <text x="35" y="98" text-anchor="middle" font-size="11" fill="#0A6062" font-weight="700" font-family="Satoshi,Inter,sans-serif">Oxigenador</text>
+            <text x="35" y="112" text-anchor="middle" font-size="10" fill="#52606D" font-family="Satoshi,Inter,sans-serif">FiO₂ 100% · sweep</text>
+          </g>
+
+          <!-- Sweep gas inlet -->
+          <path d="M390 110 L 390 158" stroke="#B46B00" stroke-width="3.5" stroke-dasharray="4 3" fill="none" marker-end="url(#arrV)" />
+          <circle cx="390" cy="158" r="0" />
+          <text x="395" y="120" font-size="11" fill="#7C4A00" font-weight="700" font-family="Satoshi,Inter,sans-serif">Sweep gas</text>
+          <text x="395" y="134" font-size="10" fill="#7C4A00" font-family="Satoshi,Inter,sans-serif">CO₂ out</text>
+
+          <!-- Return cannula (yugular) -->
+          <path d="M355 180 C 320 130, 250 90, 170 80" stroke="#C2185B" stroke-width="6" fill="none" stroke-linecap="round" marker-end="url(#arrA)"/>
+          <text x="225" y="74" font-size="11" fill="#8B154A" font-weight="700" font-family="Satoshi,Inter,sans-serif">Retorno (yugular) — sangre oxigenada</text>
+
+          <!-- Pressure tag P1 -->
+          <g transform="translate(238,215)">
+            <rect x="0" y="0" rx="6" ry="6" width="44" height="20" fill="#E4F0FB" stroke="#1F6FB2"/>
+            <text x="22" y="14" text-anchor="middle" font-size="11" fill="#15517F" font-weight="700" font-family="Satoshi,Inter,sans-serif">P1 ≥ -50</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ===== Section 0: Vista rápida ===== -->
+    <section id="vista-rapida">
+      <div class="eyebrow">00 · Vista rápida</div>
+      <h2>Mapa de control del ECMO VV</h2>
+      <p class="lead">Dos circuitos de control independientes: la <strong>oxigenación</strong> depende del flujo de sangre por la membrana; la <strong>ventilación / depuración de CO₂</strong> depende del flujo de gas (sweep).</p>
+
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card">
+          <h4 style="color:var(--venous)">Oxigenación (PaO₂)</h4>
+          <h3 style="margin-top:4px">Flujo de sangre</h3>
+          <p class="note">Aumento de RPM <span class="tag-arrow">→</span> ↑ flujo de drenaje <span class="tag-arrow">→</span> ↑ oxigenación.</p>
+          <div class="chip-row" style="margin-top:10px">
+            <span class="chip venous">RPM</span>
+            <span class="chip venous">Flujo sangre</span>
+            <span class="chip venous">FiO₂ ECMO 100%</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--caution)">Ventilación (CO₂)</h4>
+          <h3 style="margin-top:4px">Flujo de gas (sweep)</h3>
+          <p class="note">↑ sweep <span class="tag-arrow">→</span> ↑ lavado de CO₂. Subida progresiva por riesgo de lavado rápido.</p>
+          <div class="chip-row" style="margin-top:10px">
+            <span class="chip caution">Sweep L/min</span>
+            <span class="chip caution">Inicio 1-2 L/min</span>
+            <span class="chip caution">GSA cada 10-15 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control diagram -->
+      <div class="card" style="margin-top:18px">
+        <h3>Diagrama de control</h3>
+        <p class="note">Qué mando ajusto y sobre qué variable actúa.</p>
+        <div class="cfd-diagram">
+          <div class="cfd-lane cfd-lane-o2">
+            <p class="cfd-lane-h">Oxigenación</p>
+            <div class="cfd-pipeline">
+              <div class="cfd-node cfd-node-mandos">
+                <p class="cfd-node-k">Mandos</p>
+                <div class="cfd-mandos-stack">
+                  <div class="cfd-mandos-row">
+                    <span class="cfd-pill cfd-pill-blue">RPM bomba ↑</span>
+                    <button type="button" class="cfd-thumb-btn js-cfd-zoom" aria-label="Ampliar imagen mandos RPM (Rotaflow)">
+                      <img class="cfd-thumb" src="ecmo-vv-diagram-rpm-mandos.png" alt="Consola Maquet Rotaflow: displays RPM y L/min, mando rotativo" width="120" height="84" loading="lazy" decoding="async" />
+                    </button>
+                  </div>
+                  <div class="cfd-mandos-row">
+                    <span class="cfd-pill cfd-pill-blue">FiO₂ ECMO 100%</span>
+                  </div>
+                </div>
+              </div>
+              <span class="cfd-arrow" aria-hidden="true">→</span>
+              <div class="cfd-node cfd-node-mech">
+                <p class="cfd-node-k">Mecanismo</p>
+                Flujo sangre por<br />la membrana
+              </div>
+              <span class="cfd-arrow" aria-hidden="true">→</span>
+              <div class="cfd-node cfd-node-out cfd-node-out-o2">
+                <p class="cfd-node-k">Efecto</p>
+                ↑ Oxigenación
+                <small>PaO₂ · PAFI</small>
+              </div>
+            </div>
+          </div>
+          <div class="cfd-lane cfd-lane-co2">
+            <p class="cfd-lane-h">CO₂</p>
+            <div class="cfd-pipeline">
+              <div class="cfd-node cfd-node-mandos">
+                <p class="cfd-node-k">Mandos</p>
+                <div class="cfd-mandos-stack">
+                  <div class="cfd-mandos-row">
+                    <span class="cfd-pill cfd-pill-amber">Sweep gas ↑</span>
+                    <button type="button" class="cfd-thumb-btn js-cfd-zoom" aria-label="Ampliar imagen rotámetros de sweep O₂/aire">
+                      <img class="cfd-thumb" src="ecmo-vv-diagram-sweep-flowmeters.png" alt="Rotámetros ml/min y L/min para caudal de sweep O₂/aire" width="120" height="84" loading="lazy" decoding="async" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <span class="cfd-arrow" aria-hidden="true">→</span>
+              <div class="cfd-node cfd-node-mech">
+                <p class="cfd-node-k">Mecanismo</p>
+                Difusión CO₂ en<br />oxigenador
+              </div>
+              <span class="cfd-arrow" aria-hidden="true">→</span>
+              <div class="cfd-node cfd-node-out cfd-node-out-co2">
+                <p class="cfd-node-k">Efecto</p>
+                ↓ PaCO₂ · ↑ pH
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section 1: Oxigenación ===== -->
+    <section id="oxigenacion">
+      <div class="eyebrow">01 · Oxigenación</div>
+      <h2>Flujo de sangre como control de oxigenación</h2>
+
+      <div class="oxygen-console-row" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 14px;margin-top:12px">
+        <img src="consola-cardiohelp-oxigenacion.png" alt="Consola Maquet Cardiohelp: caudal, hemoglobina, hematocrito y saturación venosa (SvO₂)." style="width:80px;max-width:24vw;height:auto;border-radius:8px;border:1px solid var(--border-strong);box-shadow:var(--shadow);flex-shrink:0;background:var(--surface)" loading="lazy" decoding="async" />
+        <p style="margin:0;flex:1;min-width:min(100%,200px);font-size:13px;color:var(--text-muted);line-height:1.5;align-self:center">Lectura en <strong style="color:var(--text)">consola Cardiohelp</strong>: caudal, <strong style="color:var(--text)">Hb</strong>/<strong style="color:var(--text)">Hto</strong> y <strong style="color:var(--text)">SvO₂</strong> para seguir el balance de oxigenación del circuito (imagen de referencia, valores orientativos).</p>
+      </div>
+
+      <div class="objbar" style="margin-top:14px">
+        <div class="obj venous"><span class="l">Objetivo</span><span class="v">PAFI &gt; 200 mmHg</span></div>
+        <div class="obj venous"><span class="l">FiO₂ ECMO</span><span class="v">100%</span></div>
+        <div class="obj venous"><span class="l">Presión drenaje</span><span class="v">P1 ≥ -50 mmHg</span></div>
+        <div class="obj caution"><span class="l">FiO₂ ECMO en destete</span><span class="v">Descenso solo en weaning</span></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>FiO₂ del respirador</h3>
+          <p>Fracción de oxígeno del <strong>ventilador</strong>. En VV la oxigenación la marca sobre todo el circuito ECMO; el respirador debe aportar el mínimo O₂ compatible con protección pulmonar.</p>
+          <ul class="tight muted">
+            <li>Objetivo <strong>&lt; 40 %</strong> cuando sea posible. Subirla solo en último lugar, si con FiO₂ ECMO al 100% y RPM adecuados persiste hipoxemia.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Flujo de sangre / RPM</h3>
+          <p>Aumento de RPM <span class="tag-arrow">→</span> ↑ flujo de drenaje <span class="tag-arrow">→</span> ↑ oxigenación.</p>
+          <p>Subir RPM hasta que la presión de drenaje <span class="mono">P1</span> alcance <strong>≈ -50 mmHg</strong>. Presiones más negativas implican riesgo de hemólisis.</p>
+          <p class="note">Flujo variable según cánula y volemia del paciente.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:24px">Orden de ajuste para mejorar oxigenación</h3>
+      <div class="o2-adjust-flow" role="list" aria-label="Secuencia de ajuste de oxigenación">
+        <div class="o2-step" role="listitem">
+          <div class="o2-step-title"><span class="num" aria-hidden="true">1</span><span>FiO₂ ECMO 100% <span class="mono" style="font-size:13px;font-weight:700;color:var(--text-muted)">(Blender)</span></span></div>
+          <img src="ecmo-blender-fio2.png" alt="Mezclador aire-oxígeno Sechrist (blender): girar el mando de FiO₂ hasta 1,0 (100 %) para el gas al oxigenador." loading="lazy" decoding="async" />
+          <p>Ajustar el <strong style="color:var(--text)">blender</strong> hasta <strong style="color:var(--text)">FiO₂ 1,0 (100 %)</strong> en el gas que alimenta la membrana antes de subir flujo sanguíneo o tocar el respirador.</p>
+        </div>
+        <div class="o2-arrow" aria-hidden="true" title="Siguiente paso">→</div>
+        <div class="o2-step" role="listitem">
+          <div class="o2-step-title"><span class="num" aria-hidden="true">2</span><span>RPM ECMO</span></div>
+          <img src="ecmo-rotaflow-rpm.png" alt="Consola Maquet Rotaflow: display de RPM y flujo en L/min, mando para ajustar revoluciones de la bomba." loading="lazy" decoding="async" />
+          <p>Subir <strong style="color:var(--text)">RPM</strong> para aumentar el flujo de sangre por el oxigenador, vigilando la presión de drenaje <span class="mono">P1</span> (objetivo ≈ −50 mmHg).</p>
+          <div class="callout caution">
+            <svg class="icn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p><strong>Precaución hemólisis:</strong> no forzar RPM si <span class="mono">P1</span> es más negativa de −50 mmHg. Reevaluar volemia y posición de cánula antes de seguir subiendo flujo.</p>
+          </div>
+        </div>
+        <div class="o2-arrow" aria-hidden="true" title="Siguiente paso">→</div>
+        <div class="o2-step" role="listitem">
+          <div class="o2-step-title"><span class="num" aria-hidden="true">3</span><span>FiO₂ del respirador</span></div>
+          <p style="padding-top:4px">Último parámetro a subir. Objetivo mantenerla <strong style="color:var(--text)">&lt; 40 %</strong> siempre que sea posible.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section 2: Ventilación / CO2 ===== -->
+    <section id="ventilacion-co2">
+      <div class="eyebrow">02 · Ventilación / CO₂</div>
+      <h2>Flujo de gas (sweep) como control de CO₂</h2>
+
+      <div class="oxygen-console-row" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 14px;margin-top:12px">
+        <img src="mezclador-sweep-calor-ecmo.png" alt="Mesa de gas ECMO: mezclador aire-oxígeno Sechrist (FiO₂), rotámetros de caudal de sweep en ml/min y L/min, y unidad calefactora Maquet con temperatura del circuito." style="width:80px;max-width:24vw;height:auto;border-radius:8px;border:1px solid var(--border-strong);box-shadow:var(--shadow);flex-shrink:0;background:var(--surface)" loading="lazy" decoding="async" />
+        <p style="margin:0;flex:1;min-width:min(100%,200px);font-size:13px;color:var(--text-muted);line-height:1.5;align-self:center">Mandos habituales en mesa de gas: <strong style="color:var(--text)">FiO₂</strong> en el mezclador aire-O₂, <strong style="color:var(--text)">caudal de sweep</strong> en los rotámetros (L/min o ml/min según escala) y <strong style="color:var(--text)">temperatura</strong> del circuito en la unidad calefactora (imagen de referencia).</p>
+      </div>
+
+      <div class="objbar" style="margin-top:14px">
+        <div class="obj caution"><span class="l">Inicio</span><span class="v">1-2 L/min</span></div>
+        <div class="obj caution"><span class="l">GSA</span><span class="v">cada 10-15 min</span></div>
+        <div class="obj caution"><span class="l">Regla</span><span class="v">Flujo gas &gt; GC</span></div>
+        <div class="obj action"><span class="l">Acción simultánea</span><span class="v">↓ Vt y ↓ FR del respirador</span></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Principio</h3>
+          <p>El flujo de gas a través de la membrana debe ser <strong>mayor que el gasto cardíaco</strong> (flujo de gas de lavado).</p>
+          <p>Sistema muy eficiente: existe riesgo de <strong>lavado rápido de CO₂</strong> con vasoconstricción masiva si se sube bruscamente.</p>
+        </div>
+        <div class="card">
+          <h3>Subida progresiva</h3>
+          <ul class="tight">
+            <li>Iniciar con <strong>1-2 L/min</strong>.</li>
+            <li><strong>GSA progresivas cada 10-15 min</strong>.</li>
+            <li>Según <span class="mono">pCO₂</span> y <span class="mono">pH</span>, subir sweep y bajar simultáneamente <span class="mono">Vt</span> y <span class="mono">FR</span> del respirador.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Algorithm cards -->
+      <h3 style="margin-top:24px">Algoritmo por objetivos</h3>
+      <div class="algo" style="margin-top:8px">
+
+        <div class="algo-card hypoxemia">
+          <div class="head">
+            <span class="pill">HIPOXEMIA</span>
+            <h3 style="margin:0">PaO₂ baja / PAFI &lt; 200</h3>
+          </div>
+          <p class="note">Actuar sobre el circuito de oxigenación, en orden.</p>
+          <ol class="steps priority" style="margin-top:8px">
+            <li><b>Comprobar FiO₂ ECMO = 100%</b><span>Confirmar mezclador y fuente de O₂.</span></li>
+            <li><b>Subir RPM</b><span>Aumentar flujo sangre; vigilar P1 ≥ −50 mmHg.</span></li>
+            <li><b>Subir FiO₂ respirador</b><span>Solo si lo anterior no es suficiente. Objetivo recuperar &lt; 40 % cuando se pueda.</span></li>
+          </ol>
+        </div>
+
+        <div class="algo-card hypercapnia">
+          <div class="head">
+            <span class="pill">HIPERCAPNIA / ACIDOSIS</span>
+            <h3 style="margin:0">pCO₂ alta · pH bajo</h3>
+          </div>
+          <p class="note">Actuar sobre el sweep, de forma progresiva.</p>
+          <ol class="steps priority" style="margin-top:8px">
+            <li><b>Subir sweep gas progresivamente</b><span>Desde 1-2 L/min, en escalones según GSA cada 10-15 min.</span></li>
+            <li><b>Bajar Vt y FR del respirador</b><span>De forma simultánea, manteniendo ventilación protectora (ver sección 3).</span></li>
+            <li><b>Evitar lavado brusco de CO₂</b><span>Riesgo de vasoconstricción masiva con subidas rápidas.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section 3: VM protectora ===== -->
+    <section id="vm-protectora">
+      <div class="eyebrow">03 · Ventilación mecánica protectora</div>
+      <h2>Parámetros del respirador en ECMO VV</h2>
+      <p class="lead">Mientras el oxigenador asume el intercambio gaseoso, la ventilación mecánica se reduce a niveles protectores / ultraprotectores.</p>
+
+      <div class="vm-resp-split">
+        <div class="vm-col">
+          <h3>Parámetros a programar</h3>
+          <div class="objbar">
+            <div class="obj action"><span class="l">FR</span><span class="v">6–10 rpm</span></div>
+            <div class="obj action"><span class="l">FiO₂</span><span class="v">&lt; 40 %</span></div>
+            <div class="obj action"><span class="l">PEEP</span><span class="v">Óptima</span></div>
+            <div class="obj action"><span class="l">Modo VC inicial</span><span class="v">VPP 4–6 ml/kg · ultraprotectora &lt; 3 ml/kg</span></div>
+          </div>
+        </div>
+        <div class="vm-col">
+          <h3>Parámetros a vigilar</h3>
+          <div class="objbar">
+            <div class="obj action"><span class="l">PAFI</span><span class="v">&gt; 200 mmHg</span></div>
+            <div class="obj action"><span class="l">Pplateau</span><span class="v">&lt; 25 cmH₂O</span></div>
+            <div class="obj action"><span class="l">Driving pressure</span><span class="v">&lt; 15 cmH₂O</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <h3>Modo y volúmenes</h3>
+        <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Etapa</th><th>Modo</th><th>Vt</th><th>Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1ª línea</strong></td>
+              <td>Volumen control (VC)</td>
+              <td><span class="chip action">VPP 4-6 ml/kg</span> &nbsp; o &nbsp; <span class="chip caution">Ultraprotectora &lt; 3 ml/kg</span></td>
+              <td>Permite control estricto de Vt y Pplateau.</td>
+            </tr>
+            <tr>
+              <td><strong>Posterior</strong></td>
+              <td>Presión soporte (PSop)</td>
+              <td>—</td>
+              <td>Valorar paso a PSop cuando proceda.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="callout info" style="margin-top:14px">
+        <svg class="icn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <p>Recuerda el orden de oxigenación: <strong>FiO₂ ECMO 100%</strong> → <strong>RPM ECMO</strong> → <strong>FiO₂ del respirador</strong> (último en subir).</p>
+      </div>
+    </section>
+
+    <!-- ===== Section 4: Anticoagulación ===== -->
+    <section id="anticoagulacion">
+      <div class="eyebrow">04 · Anticoagulación</div>
+      <h2>Perfusión de HNF y objetivos</h2>
+
+      <div class="objbar" style="margin-top:14px">
+        <div class="obj arterial"><span class="l">TCA</span><span class="v">160 – 180 s</span></div>
+        <div class="obj arterial"><span class="l">TTPA</span><span class="v">1,5 – 2 × basal</span></div>
+        <div class="obj"><span class="l">Hematocrito</span><span class="v">&gt; 30 %</span></div>
+        <div class="obj"><span class="l">Plaquetas</span><span class="v">&gt; 100.000</span></div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:18px">
+        <div class="card">
+          <h3>Perfusión de heparina (HNF)</h3>
+          <p>Mantener <strong>TCA 160-180 s</strong> y <strong>TTPA 1,5-2 × el basal</strong>.</p>
+          <p class="note">Ajustar perfusión según controles seriados de coagulación y juicio clínico.</p>
+        </div>
+        <div class="card">
+          <h3>Hematimetría</h3>
+          <ul class="tight">
+            <li>Hto &gt; 30 %.</li>
+            <li>Plaquetas &gt; 100.000.</li>
+          </ul>
+          <p class="note">Transfusión según protocolo de UCI / centro.</p>
+        </div>
+      </div>
+
+      <div class="callout alert" style="margin-top:14px">
+        <svg class="icn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        <p><strong>Atención en flujos bajos.</strong> Con flujos inferiores a <strong>1,5 L/min</strong> se requiere <strong>TCA &gt; 200 s</strong> para minimizar el riesgo trombótico del circuito (ver sección de retirada).</p>
+      </div>
+    </section>
+
+    <!-- ===== Section 5: Retirada / destete ===== -->
+    <section id="retirada">
+      <div class="eyebrow">05 · Retirada / destete</div>
+      <h2>Cuándo y cómo desconectar la ECMO VV</h2>
+      <p class="lead">Iniciar cuando la causa que indicó la ECMO V-V ha mejorado o está resuelta.</p>
+
+      <!-- Pre-requisitos -->
+      <div class="grid grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3>1. Criterios de mejoría</h3>
+          <ul class="tight">
+            <li>Mejoría radiológica.</li>
+            <li><strong>PAFI &gt; 200 mmHg</strong> con FiO₂ ECMO &lt; 50 %.</li>
+            <li>Tª &lt; 38 ºC.</li>
+            <li>Mejoría de complianza pulmonar y Pplateau.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>2. Objetivo durante el destete</h3>
+          <ul class="tight">
+            <li>A medida que retiramos ECMO, <strong>aumentamos la VM</strong>.</li>
+            <li><strong>Atención a la anticoagulación</strong>: con flujos &lt; 1,5 L/min, mantener <strong>TCA &gt; 200 s</strong>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>3. Parámetros del respirador para desconexión</h3>
+        <div class="chip-row" style="margin-top:8px">
+          <span class="chip action">Pplateau &lt; 30</span>
+          <span class="chip action">Vt 6 ml/kg</span>
+          <span class="chip action">PEEP &lt; 12 mmHg</span>
+          <span class="chip action">PaO₂ &gt; 70 mmHg</span>
+          <span class="chip action">FiO₂ &lt; 60 %</span>
+          <span class="chip action">PAFI &gt; 200</span>
+          <span class="chip action">pH &gt; 7,3</span>
+          <span class="chip action">pCO₂ &lt; 50</span>
+          <span class="chip caution">Sin cor pulmonale agudo</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top:24px">4. Secuencia de desconexión</h3>
+      <p class="note" style="margin-top:6px">Tres acciones en serie; entre cada una, <strong style="color:var(--text)">GSA de control</strong> a las <strong style="color:var(--text)">2 h</strong> del cambio anterior.</p>
+      <div class="disc-flow" role="list" aria-label="Secuencia de desconexión con controles por gasometría">
+        <div class="disc-step" role="listitem">
+          <div class="disc-step-head"><span class="num" aria-hidden="true">1</span><span>Bajar sweep 0,5 L/min</span></div>
+          <p>Disminuir el flujo de gas (sweep) en <strong style="color:var(--text)">0,5 L/min</strong>.</p>
+        </div>
+        <div class="o2-arrow" aria-hidden="true">→</div>
+        <div class="disc-gsa" role="presentation">
+          <span class="gsa-label">Control</span>
+          <span class="gsa-ttl">GSA</span>
+          <p class="gsa-desc">Nueva gasometría a las <strong>2 h</strong> del paso 1.</p>
+        </div>
+        <div class="o2-arrow" aria-hidden="true">→</div>
+        <div class="disc-step" role="listitem">
+          <div class="disc-step-head"><span class="num" aria-hidden="true">2</span><span>Bajar FiO₂ ECMO al 30 %</span></div>
+          <p>Disminuir la fracción de O₂ del oxigenador (mezclador / blender según equipo).</p>
+        </div>
+        <div class="o2-arrow" aria-hidden="true">→</div>
+        <div class="disc-gsa" role="presentation">
+          <span class="gsa-label">Control</span>
+          <span class="gsa-ttl">GSA</span>
+          <p class="gsa-desc">Nueva gasometría a las <strong>2 h</strong> del paso 2.</p>
+        </div>
+        <div class="o2-arrow" aria-hidden="true">→</div>
+        <div class="disc-step" role="listitem">
+          <div class="disc-step-head"><span class="num" aria-hidden="true">3</span><span>Mínimo gas + VM (24 h)</span></div>
+          <p>Bajar sweep al mínimo (<span class="mono">1-1,5 L/min</span>); aumentar <span class="mono">Vt</span> y <span class="mono">FR</span> en el respirador y <strong style="color:var(--text)">mantener 24 h</strong> antes de valorar desconexión definitiva.</p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:16px;border-left-color:var(--success);background:#F0FAF1;color:#1F5C23">
+        <svg class="icn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <p><strong>Criterios para desconectar a las 24 h:</strong> PAFI &gt; 200 mmHg · FiO₂ ECMO &lt; 30 % · Tª &lt; 38 ºC · mejoría radiológica. Si se cumplen → <strong>desconexión de ECMO</strong>.</p>
+      </div>
+    </section>
+
+    <!-- ===== Section 6: Checklist ===== -->
+    <section id="checklist">
+      <div class="eyebrow">06 · Checklist final</div>
+      <h2>Lista operativa de comprobación</h2>
+      <p class="lead">Repaso rápido por turno o tras ajustes mayores.</p>
+
+      <div class="grid grid-2" style="margin-top:14px">
+        <div class="card">
+          <h3>Circuito y oxigenación</h3>
+          <ul class="checklist" data-group="ox">
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>FiO₂ ECMO al 100% (salvo destete activo).</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>P1 ≥ −50 mmHg; sin signos de hemólisis.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>PAFI &gt; 200 mmHg en objetivos.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Ajuste de O₂ por orden: FiO₂ ECMO → RPM → FiO₂ respirador.</label></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Ventilación / CO₂</h3>
+          <ul class="checklist" data-group="vent">
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Sweep inicial 1-2 L/min, subidas progresivas.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>GSA cada 10-15 min en ajustes.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Al subir sweep: bajar Vt y FR simultáneamente.</label></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>VM protectora</h3>
+          <ul class="checklist" data-group="vmp">
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>FR 6-10 rpm; FiO₂ respirador &lt; 40 %.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Pplateau &lt; 25; driving pressure &lt; 15.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>PEEP óptima; VC 4-6 ml/kg o ultraprotectora &lt; 3 ml/kg.</label></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Anticoagulación</h3>
+          <ul class="checklist" data-group="ac">
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>TCA 160-180 s y TTPA 1,5-2 × basal.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Hto &gt; 30 %; plaquetas &gt; 100.000.</label></li>
+            <li><span class="box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><label>Flujos &lt; 1,5 L/min → TCA &gt; 200 s.</label></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>
+        <strong>Guía ECMO VV</strong> · Manual operativo de UCI · v1.0
+      </div>
+      <div class="muted">Basado en protocolo local. Adaptar al centro y al juicio clínico.</div>
+    </footer>
+
+<div id="cfd-lightbox" class="cfd-lightbox" hidden>
+  <button type="button" class="cfd-lightbox-close" aria-label="Cerrar">&times;</button>
+  <img id="cfd-lightbox-img" src="" alt="">
+</div>
+
+  </main>
+</div>
+
+<script>
+// Scrollspy: resalta el enlace del menú superior según la sección visible
+(function(){
+  const sections = Array.from(document.querySelectorAll('main section[id]'));
+  const links = Array.from(document.querySelectorAll('.nav a[href^="#"]'));
+  const map = new Map();
+  links.forEach(a => map.set(a.getAttribute('href').slice(1), a));
+
+  function onScroll(){
+    const y = window.scrollY + 165;
+    let current = sections[0]?.id;
+    for(const s of sections){
+      if(s.offsetTop <= y) current = s.id;
+    }
+    links.forEach(l => l.classList.remove('active'));
+    if(current && map.get(current)) map.get(current).classList.add('active');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
+// Ampliar miniaturas del diagrama de control (RPM / sweep)
+(function () {
+  const lb = document.getElementById('cfd-lightbox')
+  const lbImg = document.getElementById('cfd-lightbox-img')
+  if (!lb || !lbImg) return
+  function close() {
+    lb.setAttribute('hidden', '')
+    lbImg.removeAttribute('src')
+    document.body.style.overflow = ''
+  }
+  function open(src, alt) {
+    lbImg.src = src
+    lbImg.alt = alt || ''
+    lb.removeAttribute('hidden')
+    document.body.style.overflow = 'hidden'
+  }
+  document.querySelectorAll('.js-cfd-zoom').forEach((btn) => {
+    const im = btn.querySelector('img')
+    if (!im) return
+    btn.addEventListener('click', () => open(im.src, im.alt))
+  })
+  lb.addEventListener('click', (e) => {
+    if (e.target === lb) close()
+  })
+  const x = lb.querySelector('.cfd-lightbox-close')
+  if (x) x.addEventListener('click', close)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !lb.hasAttribute('hidden')) close()
+  })
+})();
+
+// Checklist toggle
+(function(){
+  document.querySelectorAll('.checklist li').forEach(li => {
+    li.addEventListener('click', () => li.classList.toggle('checked'));
+    li.setAttribute('role','checkbox');
+    li.setAttribute('tabindex','0');
+    li.addEventListener('keydown', e => {
+      if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); li.classList.toggle('checked'); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -22,6 +22,8 @@ import {
 } from '../components/ui.jsx'
 import { publicAsset } from '../lib/publicAsset.js'
 
+const SWAN_GANZ_SG_TABLE_HREF = publicAsset('ecmo/SG.html')
+
 export function MethodsView({ selectedMethod, setSelectedMethod }) {
   if (selectedMethod === 'swan') {
     return <SwanGanzDetailView onBack={() => setSelectedMethod(null)} />
@@ -245,6 +247,40 @@ function SwanGanzDetailView({ onBack }) {
                   Misma morfología en trazado clínico (referencia).
                 </figcaption>
               </figure>
+            </div>
+
+            <div className="mt-8 space-y-3 border-t border-slate-200 pt-8">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-blue-900">
+                    Parámetros Swan-Ganz (tabla de referencia)
+                  </h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600 md:text-sm">
+                    Contenido de{' '}
+                    <code className="rounded bg-slate-100 px-1 py-0.5 text-[11px] text-slate-800">
+                      ecmo/SG.html
+                    </code>
+                    : valores normales y unidades. Vista embebida; si no carga, ábrala en una pestaña
+                    nueva.
+                  </p>
+                </div>
+                <a
+                  href={SWAN_GANZ_SG_TABLE_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl border border-blue-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-900 shadow-sm transition hover:bg-blue-50"
+                >
+                  Abrir en nueva pestaña
+                </a>
+              </div>
+              <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-inner">
+                <iframe
+                  title="Parámetros medidos con catéter de arteria pulmonar (Swan-Ganz)"
+                  src={SWAN_GANZ_SG_TABLE_HREF}
+                  className="h-[min(75vh,720px)] w-full border-0"
+                  loading="lazy"
+                />
+              </div>
             </div>
           </section>
 

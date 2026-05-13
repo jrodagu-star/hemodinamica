@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sistemas de soporte extracorpóreo tipo ECMO</title>
+    
+    
+    <style>
+      :root {
+        --ink: #18212b;
+        --muted: #5f6b7a;
+        --line: #d8dee6;
+        --line-soft: #e9edf2;
+        --panel: #f7f9fb;
+        --panel-2: #fbfcfd;
+        --navy: #17324d;
+        --teal: #0f766e;
+        --rose: #9f1239;
+        --amber: #9a6700;
+        --slate: #475569;
+        --pump-mag-bg: #e9f3f7;
+        --pump-mag-tx: #0f4c5c;
+        --pump-dig-bg: #eef2ff;
+        --pump-dig-tx: #4338ca;
+        --pump-hls-bg: #ecfeff;
+        --pump-hls-tx: #0f766e;
+        --pump-high-bg: #fff7ed;
+        --pump-high-tx: #9a3412;
+        --pump-cent-bg: #f8fafc;
+        --pump-cent-tx: #334155;
+        --pump-roller-bg: #f3e8ff;
+        --pump-roller-tx: #6b21a8;
+        --pump-memb-bg: #fefce8;
+        --pump-memb-tx: #854d0e;
+        --pump-axial-bg: #fdf2f8;
+        --pump-axial-tx: #9d174d;
+      }
+
+      body {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 34px 74px 40px;
+        position: relative;
+        box-sizing: border-box;
+        background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+        font-family: 'Inter', Arial, sans-serif;
+        color: var(--ink);
+        line-height: 1.45;
+      }
+
+      body::before {
+        content: '';
+        position: absolute;
+        inset: 18px 22px auto 22px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--navy), #8aa4b8 58%, transparent 100%);
+      }
+
+      .page-header {
+        margin-bottom: 20px;
+      }
+
+      .kicker {
+        display: inline-block;
+        margin-bottom: 8px;
+        font-size: 9px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--navy);
+        font-weight: 700;
+      }
+
+      h1 {
+        font-family: 'Merriweather', Times, serif;
+        font-size: 22px;
+        color: #122033;
+        margin-bottom: 5px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      h2 {
+        font-family: 'Inter', Arial, sans-serif;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .editorial-subtitle {
+        font-size: 10px;
+        color: var(--muted);
+        margin-bottom: 18px;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #fbfcfe 0%, #f7fafc 100%);
+        line-height: 1.55;
+      }
+
+      .table-shell {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8.15px;
+        margin-bottom: 0;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        padding: 7px 5px;
+        text-align: left;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--line-soft);
+        word-wrap: break-word;
+        hyphens: auto;
+      }
+
+      thead th {
+        background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
+        color: #233548;
+        font-weight: 700;
+        border-bottom: 1.5px solid #9aa9b8;
+        line-height: 1.15;
+        vertical-align: bottom;
+        font-size: 7.8px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      tbody.group-bomba tr:nth-child(even) td:not(.col-bomba):not(.col-ventr):not(.col-transp) {
+        background-color: var(--panel-2);
+      }
+
+      tbody.group-bomba {
+        border-bottom: 2px solid #cfd8e3;
+      }
+
+      .col-bomba {
+        font-weight: 700;
+        border-right: 1px solid var(--line);
+        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.55);
+      }
+
+      .pump-mag {
+        background-color: var(--pump-mag-bg);
+        color: var(--pump-mag-tx);
+      }
+
+      .pump-dig {
+        background-color: var(--pump-dig-bg);
+        color: var(--pump-dig-tx);
+      }
+
+      .pump-hls {
+        background-color: var(--pump-hls-bg);
+        color: var(--pump-hls-tx);
+      }
+
+      .pump-high {
+        background-color: var(--pump-high-bg);
+        color: var(--pump-high-tx);
+      }
+
+      .pump-cent {
+        background-color: var(--pump-cent-bg);
+        color: var(--pump-cent-tx);
+      }
+
+      .pump-roller {
+        background-color: var(--pump-roller-bg);
+        color: var(--pump-roller-tx);
+      }
+
+      .pump-memb {
+        background-color: var(--pump-memb-bg);
+        color: var(--pump-memb-tx);
+      }
+
+      .pump-axial {
+        background-color: var(--pump-axial-bg);
+        color: var(--pump-axial-tx);
+      }
+
+      .col-ventr,
+      .col-transp {
+        background-color: #fafbfd;
+        border-right: 1px solid #eef2f6;
+      }
+
+      th:nth-child(1) {
+        width: 10%;
+      }
+      th:nth-child(2) {
+        width: 8%;
+      }
+      th:nth-child(3) {
+        width: 9%;
+      }
+      th:nth-child(4) {
+        width: 18%;
+      }
+      th:nth-child(5) {
+        width: 9%;
+      }
+      th:nth-child(6) {
+        width: 6%;
+      }
+      th:nth-child(7) {
+        width: 10%;
+      }
+      th:nth-child(8) {
+        width: 7%;
+      }
+      th:nth-child(9) {
+        width: 4.5%;
+      }
+      th:nth-child(10) {
+        width: 4.5%;
+      }
+      th:nth-child(11) {
+        width: 6%;
+      }
+      th:nth-child(12) {
+        width: 8%;
+      }
+
+      .sys-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .img-container {
+        width: 34px;
+        height: 34px;
+        flex-shrink: 0;
+        border: 1px solid #d5dde6;
+        background: linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      }
+
+      .img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+      }
+
+      .img-container.img-clickable {
+        cursor: zoom-in;
+      }
+
+      .img-container.img-clickable:focus-visible {
+        outline: 2px solid var(--teal);
+        outline-offset: 2px;
+      }
+
+      .img-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(15, 23, 42, 0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+
+      .img-lightbox[hidden] {
+        display: none !important;
+      }
+
+      .img-lightbox img {
+        max-width: min(96vw, 1200px);
+        max-height: 92vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      }
+
+      .img-lightbox-close {
+        position: fixed;
+        top: 16px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        color: #0f172a;
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+        font-weight: 300;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .img-lightbox-close:hover {
+        background: #f1f5f9;
+      }
+
+      .placeholder {
+        background-color: #f5f7fa;
+        color: #94a3b8;
+        font-size: 4.2px;
+        text-align: center;
+        line-height: 1.15;
+        padding: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .sys-meta strong {
+        display: block;
+        font-size: 8.5px;
+        color: #18212b;
+      }
+
+      .sys-meta span {
+        display: block;
+        font-size: 6.7px;
+        color: var(--muted);
+        margin-top: 1px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 2px 5px;
+        font-size: 7.35px;
+        font-weight: 600;
+        line-height: 1.1;
+        border: 0.5px solid transparent;
+        white-space: normal;
+        border-radius: 999px;
+      }
+
+      .b-yes {
+        background-color: #eefbf6;
+        color: #116149;
+        border-color: #b9ead8;
+      }
+
+      .b-no {
+        background-color: #fff2f4;
+        color: var(--rose);
+        border-color: #f6c8d3;
+      }
+
+      .b-limit {
+        background-color: #fff8e8;
+        color: var(--amber);
+        border-color: #f5df9d;
+      }
+
+      .b-neutral {
+        background-color: #f4f7fa;
+        color: var(--slate);
+        border-color: #dbe3ec;
+      }
+
+      .b-complex {
+        background-color: #ffffff;
+        color: #1f2937;
+        border-color: #cad4df;
+        margin-top: 2px;
+        display: block;
+        text-align: center;
+        border-radius: 10px;
+      }
+
+      .compat-note {
+        font-size: 6.8px;
+        color: var(--muted);
+        display: block;
+        margin-top: 2px;
+      }
+
+      .editorial-section {
+        margin-top: 18px;
+        padding-top: 12px;
+        font-size: 8.6px;
+        color: var(--muted);
+      }
+
+      .legend-box {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+        margin-bottom: 12px;
+        align-items: center;
+        padding: 8px 12px;
+        background: linear-gradient(180deg, #fbfcfe 0%, #f5f8fb 100%);
+        border: 1px solid var(--line);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .pump-legend {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px 10px;
+        padding: 10px 12px;
+        margin: 0 0 12px 0;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .pump-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 7.7px;
+        color: #334155;
+      }
+
+      .pump-swatch {
+        width: 11px;
+        height: 11px;
+        border-radius: 2px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .notes-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 12px 0;
+        column-count: 2;
+        column-gap: 26px;
+      }
+
+      .notes-list li {
+        margin-bottom: 7px;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .final-note {
+        font-style: italic;
+        color: #2f4053;
+        background: linear-gradient(180deg, #f5f8fb 0%, #eef3f7 100%);
+        padding: 9px 12px;
+        border-left: 3px solid #8aa4b8;
+        margin-top: 12px;
+        font-size: 8.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page-header">
+      <span class="kicker">Capítulo de referencia · soporte extracorpóreo</span>
+      <h1>Sistemas de soporte extracorpóreo tipo ECMO</h1>
+      <h2>Tabla comparativa de plataformas, compatibilidad y aplicaciones clínicas avanzadas</h2>
+      <p class="editorial-subtitle">
+        Nota editorial: La presente tabla se presenta en formato de alta legibilidad para capítulo médico y se ordena
+        por arquitectura de bomba, soporte ventricular primario y perfil logístico de transporte, con el objetivo de
+        facilitar la comparación entre plataformas desde una perspectiva tecnológica, clínica y operativa.
+      </p>
+    </header>
+
+    <div class="table-shell">
+      <table>
+      <thead>
+        <tr>
+          <th>Tipo de bomba</th>
+          <th>Soporte ventr.</th>
+          <th>Transporte</th>
+          <th>Sistema</th>
+          <th>Fabricante / Filial</th>
+          <th>País</th>
+          <th>Compatibilidad</th>
+          <th>Autonomía</th>
+          <th>VV</th>
+          <th>VA</th>
+          <th>ECMO híbrido</th>
+          <th>VAD completo</th>
+        </tr>
+      </thead>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td rowspan="2" class="col-bomba pump-mag">Centrífuga magnética</td>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-limit">Limitado</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen CentriMag">
+                <img src="centrimag-sistema.png" alt="Sistema CentriMag Blood Pump montado en carro con monitor y oxigenador">
+              </div>
+              <div class="sys-meta"><strong>CentriMag</strong><span>Plataforma ECMO / soporte ventricular</span></div>
+            </div>
+          </td>
+          <td>Abbott</td>
+          <td>USA</td>
+          <td>CentriMag<span class="compat-note">Circuito/plataforma específica del sistema</span></td>
+          <td><span class="badge b-neutral">Corriente</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (LVAD/RVAD/BiVAD)</span></td>
+        </tr>
+        <tr>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container"><div class="placeholder">Imagen no disponible</div></div>
+              <div class="sys-meta"><strong>ECMOLIFE</strong><span>Plataforma ECMO de transporte</span></div>
+            </div>
+          </td>
+          <td>Eurosets</td>
+          <td>Italia</td>
+          <td>Eurosets PMP<span class="compat-note">Oxigenador PMP compatible con la plataforma</span></td>
+          <td>90 min</td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (LVAD/RVAD)</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td rowspan="2" class="col-bomba pump-dig">Centrífuga digital</td>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí (intra/inter)</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen Rotaflow II">
+                <img src="rotaflow-ii-sistema.png" alt="Consola Getinge Rotaflow II con pantalla, mando y unidad de bomba/oxigenador">
+              </div>
+              <div class="sys-meta"><strong>Rotaflow II</strong><span>Sistema ECMO digital</span></div>
+            </div>
+          </td>
+          <td>Getinge / Maquet</td>
+          <td>Suecia</td>
+          <td>HLS / Quadrox<span class="compat-note">Familia de oxigenadores/circuitos compatibles</span></td>
+          <td>90 min</td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (LVAD/RVAD)</span></td>
+        </tr>
+        <tr>
+          <td class="col-ventr"><span class="badge b-no">No</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container"><div class="placeholder">Imagen no disponible</div></div>
+              <div class="sys-meta"><strong>VitalFlow</strong><span>Plataforma ECMO digital</span></div>
+            </div>
+          </td>
+          <td>Medtronic</td>
+          <td>Irlanda</td>
+          <td>Affinity / PMP<span class="compat-note">Configuración con PMP según circuito</span></td>
+          <td>60–90 min</td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-no">No</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-hls">Centrífuga integrada HLS</td>
+          <td class="col-ventr"><span class="badge b-no">No</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen Cardiohelp">
+                <img src="cardiohelp-sistema.png" alt="Sistema portátil Maquet Cardiohelp Getinge: pantalla, mandos y panel de conexiones">
+              </div>
+              <div class="sys-meta"><strong>Cardiohelp</strong><span>Sistema integrado HLS</span></div>
+            </div>
+          </td>
+          <td>Getinge / Maquet</td>
+          <td>Suecia</td>
+          <td>HLS<span class="compat-note">Módulo integrado del ecosistema HLS</span></td>
+          <td>90 min</td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-no">No</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-high">Centrífuga alta velocidad</td>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí (intra)</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen Rotaflow I">
+                <img src="rotaflow-i-sistema.png" alt="Consola Maquet Rotaflow: panel inclinado, displays y mando rotativo">
+              </div>
+              <div class="sys-meta"><strong>Rotaflow I</strong><span>Plataforma de alta velocidad</span></div>
+            </div>
+          </td>
+          <td>Getinge / Maquet</td>
+          <td>Suecia</td>
+          <td>HLS / Quadrox<span class="compat-note">Familia de oxigenadores/circuitos compatibles</span></td>
+          <td><span class="badge b-neutral">Corriente</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (LVAD/RVAD)</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-cent">Centrífuga</td>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-no">No</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container"><div class="placeholder">Imagen no disponible</div></div>
+              <div class="sys-meta"><strong>Bio Console 560</strong><span>Consola centrífuga convencional</span></div>
+            </div>
+          </td>
+          <td>Medtronic</td>
+          <td>Irlanda</td>
+          <td>Bio Pump<span class="compat-note">Compatibilidad con consola y bomba Bio Pump</span></td>
+          <td><span class="badge b-neutral">Corriente</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (LVAD/RVAD)</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-roller">Centrífuga / rodillo</td>
+          <td class="col-ventr"><span class="badge b-yes">Sí</span></td>
+          <td class="col-transp"><span class="badge b-no">No</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container"><div class="placeholder">Imagen no disponible</div></div>
+              <div class="sys-meta"><strong>LivaNova CP5</strong><span>Configuración centrífuga / rodillo</span></div>
+            </div>
+          </td>
+          <td>LivaNova (Sorin)</td>
+          <td>Italia / UK</td>
+          <td>LivaNova<span class="compat-note">Compatibilidad con componentes de la plataforma</span></td>
+          <td><span class="badge b-neutral">Corriente</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-yes">Sí</span></td>
+          <td><span class="badge b-complex">Sí (según configuración)</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-memb">Membrana / pumpless (según modelo)</td>
+          <td class="col-ventr"><span class="badge b-no">No</span></td>
+          <td class="col-transp"><span class="badge b-limit">Limitado</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen Novalung / Xenios">
+                <img src="xenios-novalung-sistema.png" alt="Sistema Xenios Novalung: consola con pantalla, soporte vertical y circuito con oxigenador y bomba">
+              </div>
+              <div class="sys-meta"><strong>Novalung / Xenios</strong><span>Configuración pumpless según modelo</span></div>
+            </div>
+          </td>
+          <td>Fresenius</td>
+          <td>Alemania</td>
+          <td>Xenios<span class="compat-note">Compatibilidad dependiente del sistema Xenios</span></td>
+          <td>—</td>
+          <td><span class="badge b-complex">Sí (pumpless)</span></td>
+          <td><span class="badge b-no">No</span></td>
+          <td><span class="badge b-no">No</span></td>
+          <td><span class="badge b-no">No</span></td>
+        </tr>
+      </tbody>
+
+      
+      <tbody class="group-bomba">
+        <tr>
+          <td class="col-bomba pump-axial">Microbomba axial</td>
+          <td class="col-ventr"><span class="badge b-complex">Sí (descarga directa)</span></td>
+          <td class="col-transp"><span class="badge b-yes">Sí</span></td>
+          <td>
+            <div class="sys-wrap">
+              <div class="img-container img-clickable" role="button" tabindex="0" aria-label="Ampliar imagen Impella">
+                <img src="impella-controller.png" alt="Consola Impella Controller Abiomed: pantalla con posición del catéter, flujo y controles">
+              </div>
+              <div class="sys-meta"><strong>Impella</strong><span>Microbomba axial de descarga</span></div>
+            </div>
+          </td>
+          <td>Abiomed</td>
+          <td>USA</td>
+          <td>Catéteres Impella<span class="compat-note">Interfaz dedicada propia del sistema</span></td>
+          <td>—</td>
+          <td><span class="badge b-no">No</span></td>
+          <td><span class="badge b-no">No</span></td>
+          <td><span class="badge b-no">No</span></td>
+          <td><span class="badge b-complex">Sí (LVAD parcial)</span></td>
+        </tr>
+      </tbody>
+      </table>
+    </div>
+
+    <div class="editorial-section">
+      <div class="legend-box">
+        <strong>Leyenda visual:</strong>
+        <span class="legend-item"><span class="badge b-yes">Sí</span> Disponible / apto</span>
+        <span class="legend-item"><span class="badge b-no">No</span> No disponible</span>
+        <span class="legend-item"><span class="badge b-limit">Limitado</span> Uso o logística restringidos</span>
+        <span class="legend-item"><span class="badge b-neutral">Corriente</span> Dependiente de red eléctrica</span>
+        <span class="legend-item"><span class="badge b-complex">Texto</span> Aplicación o configuración específica</span>
+      </div>
+
+      <div class="pump-legend">
+        <span class="pump-chip"><span class="pump-swatch" style="background:#e9f3f7"></span>Centrífuga magnética</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#eef2ff"></span>Centrífuga digital</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#ecfeff"></span>Centrífuga integrada HLS</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#fff7ed"></span>Centrífuga alta velocidad</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#f8fafc"></span>Centrífuga</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#f3e8ff"></span>Centrífuga / rodillo</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#fefce8"></span>Membrana / pumpless</span>
+        <span class="pump-chip"><span class="pump-swatch" style="background:#fdf2f8"></span>Microbomba axial</span>
+      </div>
+
+      <ul class="notes-list">
+        <li><strong>VV:</strong> Soporte veno-venoso (asistencia respiratoria).</li>
+        <li><strong>VA:</strong> Soporte veno-arterial (asistencia cardiorrespiratoria).</li>
+        <li>
+          <strong>ECMO híbrido (VAV/VVA):</strong> Configuraciones combinadas de soporte respiratorio y circulatorio
+          simultáneo.
+        </li>
+        <li>
+          <strong>VAD completo:</strong> Capacidad de asistencia ventricular dedicada según la configuración del
+          sistema.
+        </li>
+        <li>
+          <strong>Compatibilidad:</strong> Hace referencia al circuito, oxigenador, consola o ecosistema técnico
+          expresamente asociado a cada plataforma en la tabla comparativa.
+        </li>
+      </ul>
+
+      <div class="final-note">
+        Nota editorial: La selección de plataforma debe individualizarse según objetivo clínico, logística de transporte
+        y compatibilidad con el circuito.
+      </div>
+    </div>
+  
+
+<div id="img-lightbox" class="img-lightbox" hidden>
+  <button type="button" class="img-lightbox-close" aria-label="Cerrar">&times;</button>
+  <img id="img-lightbox-img" src="" alt="">
+</div>
+<script>
+(function () {
+  var lb = document.getElementById('img-lightbox')
+  var lbImg = document.getElementById('img-lightbox-img')
+  if (!lb || !lbImg) return
+  function close() {
+    lb.setAttribute('hidden', '')
+    lbImg.removeAttribute('src')
+    document.body.style.overflow = ''
+  }
+  function open(src, alt) {
+    lbImg.src = src
+    lbImg.alt = alt || ''
+    lb.removeAttribute('hidden')
+    document.body.style.overflow = 'hidden'
+  }
+  document.querySelectorAll('.img-container').forEach(function (wrap) {
+    var th = wrap.querySelector(':scope > img')
+    if (!th || !th.getAttribute('src')) return
+    wrap.classList.add('img-clickable')
+    if (!wrap.getAttribute('aria-label')) {
+      wrap.setAttribute('aria-label', 'Ampliar imagen: ' + (th.getAttribute('alt') || 'equipo'))
+    }
+    if (!wrap.getAttribute('role')) wrap.setAttribute('role', 'button')
+    if (!wrap.hasAttribute('tabindex')) wrap.setAttribute('tabindex', '0')
+    wrap.addEventListener('click', function () {
+      open(th.src, th.alt)
+    })
+    wrap.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        open(th.src, th.alt)
+      }
+    })
+  })
+  lb.addEventListener('click', function (e) {
+    if (e.target === lb) close()
+  })
+  var btn = lb.querySelector('.img-lightbox-close')
+  if (btn) btn.addEventListener('click', close)
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !lb.hasAttribute('hidden')) close()
+  })
+})()
+</script>
+</body></html>

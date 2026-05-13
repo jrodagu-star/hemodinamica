@@ -1,319 +1,720 @@
+import { useMemo, useState } from 'react'
 import {
-  Activity,
-  Droplets,
-  Search,
-  Wind,
-  Zap,
-} from 'lucide-react'
+  Chart as ChartJS,
+  Filler,
+  LineElement,
+  PointElement,
+  RadialLinearScale,
+  Tooltip,
+} from 'chart.js'
+import { Radar } from 'react-chartjs-2'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 import {
-  InputGroup,
-  ParameterCard,
-  QuickAlert,
-  ResultSection,
-} from '../components/ui.jsx'
+  categoryOptions,
+  computeResults,
+  IMPORTANT_KEYS,
+  INPUT_FIELD_GROUPS,
+  INPUT_FIELDS,
+  radarScores,
+  REFERENCE_ROWS,
+  RESULTS_META,
+  SAMPLE_PRESETS,
+  inputRangeStatus,
+  statusFor,
+} from '../lib/hemodynamicDashboard.js'
+import { SHOCK_RADAR_AXES, shockRadarScores } from '../lib/shockRadar.js'
 
-export function CalculadoraView({ inputs, stats, handleInputChange }) {
+ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip)
+
+function emptyInputs() {
+  return Object.fromEntries(INPUT_FIELDS.map(([id]) => [id, '']))
+}
+
+function statusClass(cls, dark) {
+  if (cls === 'ok')
+    return dark ? 'text-emerald-400' : 'text-emerald-700'
+  if (cls === 'warn')
+    return dark ? 'text-amber-400' : 'text-amber-700'
+  return dark ? 'text-red-400' : 'text-red-700'
+}
+
+/** Borde/fondo del campo según rango (vacío = estilo neutro). */
+function inputFieldTone(rangeStatus, dark, neutralFieldBg) {
+  if (rangeStatus === 'empty') return neutralFieldBg
+  if (rangeStatus === 'low') {
+    return dark
+      ? 'border-amber-500/85 bg-amber-950/45 text-amber-50 ring-amber-500/35 placeholder:text-amber-600'
+      : 'border-amber-400 bg-amber-50 text-slate-900 ring-amber-400/40 placeholder:text-slate-500'
+  }
+  if (rangeStatus === 'high') {
+    return dark
+      ? 'border-red-500/85 bg-red-950/40 text-red-50 ring-red-500/35 placeholder:text-red-400/70'
+      : 'border-red-400 bg-red-50 text-slate-900 ring-red-400/35 placeholder:text-slate-500'
+  }
+  return dark
+    ? 'border-emerald-500/80 bg-emerald-950/35 text-emerald-50 ring-emerald-500/30 placeholder:text-emerald-300/60'
+    : 'border-emerald-500 bg-emerald-50 text-slate-900 ring-emerald-500/35 placeholder:text-slate-500'
+}
+
+/** Flecha por campo (misma leyenda que arriba en «Datos de entrada»). */
+function inputRangeArrow(rangeStatus, dark) {
+  if (rangeStatus === 'empty')
+    return {
+      Icon: ArrowLeft,
+      iconClass: dark ? 'text-slate-400' : 'text-slate-500',
+      hint: 'Sin dato o sin rango de referencia',
+    }
+  if (rangeStatus === 'low')
+    return {
+      Icon: ArrowDown,
+      iconClass: dark ? 'text-amber-400' : 'text-amber-600',
+      hint: 'Por debajo del rango de referencia',
+    }
+  if (rangeStatus === 'high')
+    return {
+      Icon: ArrowUp,
+      iconClass: dark ? 'text-red-400' : 'text-red-600',
+      hint: 'Por encima del rango de referencia',
+    }
+  return {
+    Icon: ArrowRight,
+    iconClass: dark ? 'text-emerald-400' : 'text-emerald-600',
+    hint: 'Dentro del rango de referencia',
+  }
+}
+
+/** Fórmula CaO₂ (misma base que `computeResults`: Hb g/dL, SpO₂ %, PaO₂ mmHg). */
+function CaO2FormulaRich({ dark, className = '' }) {
+  const red = dark ? 'text-red-400' : 'text-red-600'
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <section className="space-y-6 lg:col-span-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 border-b pb-2 text-lg font-bold">
-            <Search size={18} className="text-blue-500" aria-hidden />
-            Datos de entrada
-          </h2>
+    <span
+      className={`font-mono font-bold ${dark ? 'text-slate-100' : 'text-slate-900'} ${className}`}
+    >
+      CaO₂ = (0,0138 × <span className={red}>Hb</span> × <span className={red}>SpO₂</span>) + (0,0031 ×{' '}
+      <span className={red}>PaO₂</span>)
+    </span>
+  )
+}
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <InputGroup
-                label="Peso (kg)"
-                name="weight"
-                value={inputs.weight}
-                onChange={handleInputChange}
-              />
-              <InputGroup
-                label="Altura (cm)"
-                name="height"
-                value={inputs.height}
-                onChange={handleInputChange}
-              />
-              <div className="col-span-2">
-                <span className="mb-1 block text-[10px] font-bold tracking-tighter text-blue-600 uppercase">
-                  Área sup. corp. (m²)
-                </span>
-                <div className="w-full rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700">
-                  {inputs.asc.toFixed(2)}
-                </div>
-              </div>
+function ReferenceTableRows({ filter, dark }) {
+  const filtered =
+    filter === 'Todas'
+      ? REFERENCE_ROWS
+      : REFERENCE_ROWS.filter((r) => r[0] === filter)
+
+  const headCls = dark
+    ? 'bg-slate-800 font-extrabold text-teal-300'
+    : 'bg-teal-50 font-extrabold text-teal-900'
+
+  let currentCategory = null
+  const rows = []
+  filtered.forEach((r, i) => {
+    if (r[0] !== currentCategory) {
+      currentCategory = r[0]
+      rows.push(
+        <tr key={`cat-${currentCategory}-${i}`}>
+          <td className={`${headCls} rounded-none px-3 py-2`} colSpan={7}>
+            {currentCategory}
+          </td>
+        </tr>,
+      )
+    }
+    const borderCell = dark ? 'border-b border-slate-700' : 'border-b border-slate-200'
+    rows.push(
+      <tr
+        key={`${r[1]}-${i}`}
+        className={dark ? 'text-slate-200' : 'text-slate-800'}
+      >
+        <td className={`${borderCell} px-3 py-2 align-top text-sm`}>
+          <span
+            className={
+              dark
+                ? 'inline-block rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-bold text-slate-400'
+                : 'inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600'
+            }
+          >
+            {r[0]}
+          </span>
+        </td>
+        <td className={`${borderCell} px-3 py-2 align-top text-sm font-semibold`}>
+          {r[1]}
+        </td>
+        <td className={`${borderCell} min-w-[10rem] px-3 py-2 align-top text-sm`}>
+          {r[2]}
+        </td>
+        <td className={`${borderCell} px-3 py-2 align-top text-sm`}>
+          {r[0] === 'Oxigenación' && r[1] === 'CaO2' ? (
+            <CaO2FormulaRich dark={dark} className="text-[13px] leading-snug" />
+          ) : (
+            r[3]
+          )}
+        </td>
+        <td className={`${borderCell} px-3 py-2 align-top text-sm`}>{r[4]}</td>
+        <td className={`${borderCell} px-3 py-2 align-top text-sm whitespace-nowrap`}>
+          {r[5]}
+        </td>
+        <td className={`${borderCell} min-w-[12rem] max-w-[22rem] px-3 py-2 align-top text-sm leading-snug`}>
+          {r[6] ?? ''}
+        </td>
+      </tr>,
+    )
+  })
+  return rows
+}
+
+export function CalculadoraView() {
+  const [inputs, setInputs] = useState(emptyInputs)
+  const [categoryFilter, setCategoryFilter] = useState('Todas')
+  const [dark, setDark] = useState(false)
+  const [examplePresetId, setExamplePresetId] = useState('')
+
+  const results = useMemo(() => computeResults(inputs), [inputs])
+
+  const chartData = useMemo(() => {
+    const primary = dark ? '#5fd4cb' : '#0f766e'
+    const scores = radarScores(results)
+    return {
+      labels: ['Perfusión', 'Flujo', 'CaO2', 'DO2', 'VD', 'Poscarga'],
+      datasets: [
+        {
+          data: scores,
+          label: 'Perfil clínico',
+          borderColor: primary,
+          backgroundColor: dark ? 'rgba(95,212,203,0.22)' : 'rgba(15,118,110,0.18)',
+          borderWidth: 2,
+          pointRadius: 3,
+        },
+      ],
+    }
+  }, [results, dark])
+
+  const chartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false },
+          grid: {
+            color: dark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.28)',
+          },
+          pointLabels: {
+            color: dark ? '#e2e8f0' : '#334155',
+            font: { size: 12, weight: '600' },
+          },
+        },
+      },
+      plugins: { legend: { display: false } },
+    }),
+    [dark],
+  )
+
+  const shockChartData = useMemo(() => {
+    const accent = dark ? '#fbbf24' : '#d97706'
+    const scores = shockRadarScores(results, inputs)
+    return {
+      labels: SHOCK_RADAR_AXES.map((a) => a.shortLabel),
+      datasets: [
+        {
+          data: scores,
+          label: 'Semejanza (0–100)',
+          borderColor: accent,
+          backgroundColor: dark ? 'rgba(251,191,36,0.2)' : 'rgba(217,119,6,0.16)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    }
+  }, [results, inputs, dark])
+
+  const shockChartOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false },
+          grid: {
+            color: dark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.28)',
+          },
+          pointLabels: {
+            color: dark ? '#e2e8f0' : '#334155',
+            font: { size: 11, weight: '600' },
+          },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title(items) {
+              const i = items[0]?.dataIndex
+              if (i == null) return ''
+              return SHOCK_RADAR_AXES[i]?.label ?? ''
+            },
+            label(ctx) {
+              return `Semejanza: ${ctx.raw}`
+            },
+          },
+        },
+      },
+    }),
+    [dark],
+  )
+
+  const setField = (id, value) => {
+    setInputs((prev) => ({ ...prev, [id]: value }))
+  }
+
+  const recalc = () => setInputs((prev) => ({ ...prev }))
+
+  const loadPreset = (presetId) => {
+    const preset = SAMPLE_PRESETS.find((p) => p.id === presetId)
+    if (!preset) return
+    const next = emptyInputs()
+    Object.entries(preset.values).forEach(([k, v]) => {
+      next[k] = String(v)
+    })
+    setInputs(next)
+    setExamplePresetId(presetId)
+  }
+
+  const clearAll = () => {
+    setInputs(emptyInputs())
+    setExamplePresetId('')
+  }
+
+  const panel = dark
+    ? 'rounded-[18px] border border-slate-700 bg-slate-900/90 shadow-lg shadow-black/20'
+    : 'rounded-[18px] border border-slate-200 bg-white shadow-[0_10px_30px_rgba(27,31,35,0.08)]'
+
+  const innerMuted = dark ? 'text-slate-400' : 'text-slate-500'
+  const fieldBg = dark
+    ? 'border-slate-600 bg-slate-800 text-slate-100 placeholder:text-slate-500'
+    : 'border-[#d8d2c8] bg-[#f1efe9] text-slate-900'
+
+  return (
+    <div
+      className={
+        dark
+          ? 'text-slate-100'
+          : 'text-slate-900'
+      }
+    >
+      <div className="mx-auto flex max-w-[1450px] flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div
+              className={
+                dark
+                  ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-teal-500 to-teal-300 text-lg font-extrabold text-white shadow-lg shadow-black/30'
+                  : 'flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-teal-700 to-teal-900 text-lg font-extrabold text-white shadow-[0_10px_30px_rgba(27,31,35,0.12)]'
+              }
+              aria-hidden
+            >
+              HD
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <InputGroup
-                label="Hb (g/dL)"
-                name="hb"
-                value={inputs.hb}
-                onChange={handleInputChange}
-              />
-              <InputGroup
-                label="FC (lpm)"
-                name="fc"
-                value={inputs.fc}
-                onChange={handleInputChange}
-              />
+            <div>
+              <h2 className="text-xl font-bold tracking-tight md:text-2xl">
+                Dashboard hemodinámico y de oxigenación
+              </h2>
+              <p className={`mt-1 text-sm ${innerMuted}`}>
+                Calculadora interactiva a partir de la tabla del manual adjunto.
+              </p>
             </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={
+                dark
+                  ? 'rounded-xl border border-slate-600 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-slate-100 hover:bg-slate-700'
+                  : 'rounded-xl border border-[#d8d2c8] bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50'
+              }
+              onClick={() => setDark((d) => !d)}
+            >
+              {dark ? 'Modo claro' : 'Modo oscuro'}
+            </button>
+            <label className="flex items-center gap-2">
+              <span className={`sr-only`}>Cargar ejemplo</span>
+              <select
+                aria-label="Cargar ejemplo hemodinámico"
+                value={examplePresetId}
+                onChange={(e) => {
+                  const id = e.target.value
+                  if (id) loadPreset(id)
+                }}
+                className={
+                  dark
+                    ? 'min-w-[min(100%,280px)] rounded-xl border border-slate-600 bg-slate-800 py-2.5 pl-3 pr-8 text-sm font-semibold text-slate-100 hover:bg-slate-700'
+                    : 'min-w-[min(100%,280px)] rounded-xl border border-[#d8d2c8] bg-white py-2.5 pl-3 pr-8 text-sm font-semibold text-slate-800 hover:bg-slate-50'
+                }
+              >
+                <option value="">Cargar ejemplo…</option>
+                {SAMPLE_PRESETS.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className={
+                dark
+                  ? 'rounded-xl border border-slate-600 bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-slate-100 hover:bg-slate-700'
+                  : 'rounded-xl border border-[#d8d2c8] bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50'
+              }
+              onClick={clearAll}
+            >
+              Limpiar
+            </button>
+            <button
+              type="button"
+              className={
+                dark
+                  ? 'rounded-xl border border-teal-500 bg-teal-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-teal-500'
+                  : 'rounded-xl border border-teal-700 bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-teal-800'
+              }
+              onClick={recalc}
+            >
+              Recalcular
+            </button>
+          </div>
+        </div>
 
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 space-y-4">
-              <InputGroup
-                label="GC (L/min)"
-                name="gc"
-                value={inputs.gc}
-                onChange={handleInputChange}
-                highlight
-              />
-              <InputGroup
-                label="PAM (mmHg)"
-                name="pam"
-                value={inputs.pam}
-                onChange={handleInputChange}
-                highlight
-              />
+        <div className="flex flex-col gap-5">
+          <section className={panel}>
+            <div
+              className={
+                dark
+                  ? 'border-b border-slate-700 px-5 pb-2.5 pt-[18px]'
+                  : 'border-b border-[#d8d2c8] px-5 pb-2.5 pt-[18px]'
+              }
+            >
+              <h3 className="text-[1.08rem] font-semibold">Datos de entrada</h3>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <InputGroup
-                label="PVC (mmHg)"
-                name="pvc"
-                value={inputs.pvc}
-                onChange={handleInputChange}
-              />
-              <InputGroup
-                label="PCP (mmHg)"
-                name="pcp"
-                value={inputs.pcp}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <details className="rounded-xl border border-slate-200 bg-slate-50/80 open:bg-white">
-              <summary className="cursor-pointer select-none px-4 py-3 text-xs font-black tracking-wide text-slate-600 uppercase">
-                Oxigenación (SaO₂, SvO₂, gases)
-              </summary>
-              <div className="space-y-4 border-t border-slate-100 p-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <InputGroup
-                    label="SaO₂ (%)"
-                    name="sao2"
-                    value={inputs.sao2}
-                    onChange={handleInputChange}
-                  />
-                  <InputGroup
-                    label="SvO₂ (%)"
-                    name="svo2"
-                    value={inputs.svo2}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <InputGroup
-                    label="PaO₂ (mmHg)"
-                    name="pao2"
-                    value={inputs.pao2}
-                    onChange={handleInputChange}
-                  />
-                  <InputGroup
-                    label="PvO₂ (mmHg)"
-                    name="pvo2"
-                    value={inputs.pvo2}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <p className="text-[10px] leading-relaxed text-slate-500">
-                  CvO₂ usa PvO₂ (venoso/mixto). Si no dispones de PvO₂, ajusta el
-                  valor estimado (p. ej. ~35–45 mmHg).
-                </p>
-                <div className="grid grid-cols-2 gap-4">
-                  <InputGroup
-                    label="PvCO₂ (mmHg)"
-                    name="pvco2"
-                    value={inputs.pvco2}
-                    onChange={handleInputChange}
-                  />
-                  <InputGroup
-                    label="PaCO₂ (mmHg)"
-                    name="paco2"
-                    value={inputs.paco2}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-            </details>
-
-            <details className="rounded-xl border border-slate-200 bg-slate-50/80 open:bg-white">
-              <summary className="cursor-pointer select-none px-4 py-3 text-xs font-black tracking-wide text-slate-600 uppercase">
-                Circulación pulmonar (PAP, ELWI)
-              </summary>
-              <div className="space-y-4 border-t border-slate-100 p-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <InputGroup
-                    label="PAP sist (mmHg)"
-                    name="paps"
-                    value={inputs.paps}
-                    onChange={handleInputChange}
-                  />
-                  <InputGroup
-                    label="PAP diast (mmHg)"
-                    name="papd"
-                    value={inputs.papd}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <InputGroup
-                  label="ELWI (mL/kg)"
-                  name="elwi"
-                  value={inputs.elwi}
-                  onChange={handleInputChange}
+            <div className="px-5 pb-5 pt-[18px]">
+              <div
+                className="mb-4 flex flex-wrap items-center justify-center gap-10 py-1"
+                role="img"
+                aria-label="Rango normal: flecha derecha verde. Por debajo: flecha abajo amarilla. Por encima: flecha arriba roja. Sin dato: flecha izquierda gris."
+              >
+                <ArrowRight
+                  className={dark ? 'text-emerald-400' : 'text-emerald-600'}
+                  size={22}
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                <ArrowDown
+                  className={dark ? 'text-amber-400' : 'text-amber-600'}
+                  size={22}
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                <ArrowUp
+                  className={dark ? 'text-red-400' : 'text-red-600'}
+                  size={22}
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                <ArrowLeft
+                  className={dark ? 'text-slate-500' : 'text-slate-500'}
+                  size={22}
+                  strokeWidth={2.5}
+                  aria-hidden
                 />
               </div>
-            </details>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-slate-800 p-6 text-white shadow-lg">
-          <h3 className="mb-3 flex items-center gap-2 text-xs font-bold tracking-widest text-yellow-400 uppercase">
-            <Zap size={18} aria-hidden />
-            Perfusión — alertas rápidas
-          </h3>
-          <div className="space-y-3 text-left">
-            <QuickAlert
-              label="DO₂i"
-              value={stats.do2i}
-              threshold={520}
-              unit="mL/min/m²"
-            />
-            <QuickAlert
-              label="Gap CO₂"
-              value={stats.gapCo2}
-              threshold={6}
-              unit="mmHg"
-              inverse
-            />
-          </div>
-          <div className="mt-4 border-t border-white/10 pt-4 text-[10px] text-slate-400">
-            <div className="flex justify-between gap-2">
-              <span>CaO₂</span>
-              <span className="font-mono text-slate-200">
-                {stats.cao2.toFixed(1)} mL/dL
-              </span>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+                {INPUT_FIELD_GROUPS.map((group) => (
+                  <div
+                    key={group.id}
+                    className={
+                      dark
+                        ? 'flex min-h-0 min-w-0 flex-col rounded-xl border border-slate-700 bg-slate-900/55 p-3 shadow-inner'
+                        : 'flex min-h-0 min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50/90 p-3 shadow-inner'
+                    }
+                  >
+                    <h4
+                      className={
+                        dark
+                          ? 'mb-2.5 shrink-0 border-b border-slate-700 pb-2 text-[0.68rem] font-extrabold uppercase leading-tight tracking-[0.14em] text-teal-300'
+                          : 'mb-2.5 shrink-0 border-b border-slate-200 pb-2 text-[0.68rem] font-extrabold uppercase leading-tight tracking-[0.14em] text-teal-800'
+                      }
+                    >
+                      {group.title}
+                    </h4>
+                    <div className="grid min-w-0 grid-cols-3 gap-x-2 gap-y-2.5">
+                      {group.fields.map(([id, label, unit]) => {
+                        const rs = inputRangeStatus(id, inputs[id])
+                        const tone = inputFieldTone(rs, dark, fieldBg)
+                        const { Icon: RangeIcon, iconClass, hint } = inputRangeArrow(rs, dark)
+                        return (
+                          <label key={id} className="flex min-w-0 max-w-full flex-col gap-1">
+                            <span
+                              className={`truncate text-[0.72rem] font-semibold leading-tight ${innerMuted}`}
+                              title={label}
+                            >
+                              {label}
+                            </span>
+                            <div className="flex min-w-0 items-stretch gap-1">
+                              <span
+                                className={
+                                  dark
+                                    ? 'flex w-7 shrink-0 items-center justify-center rounded-lg border border-slate-600 bg-slate-800/90'
+                                    : 'flex w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white'
+                                }
+                                title={hint}
+                              >
+                                <RangeIcon
+                                  size={15}
+                                  strokeWidth={2.5}
+                                  className={`shrink-0 ${iconClass}`}
+                                  aria-hidden
+                                />
+                              </span>
+                              <input
+                                id={id}
+                                name={id}
+                                type="number"
+                                step="any"
+                                placeholder={unit}
+                                value={inputs[id]}
+                                onChange={(e) => setField(id, e.target.value)}
+                                className={`min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs outline-none focus:ring-2 ${tone}`}
+                              />
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div
+                className={
+                  dark
+                    ? 'mt-4 rounded-xl border border-red-900/40 bg-red-950/35 p-3.5'
+                    : 'mt-4 rounded-xl border border-red-100 bg-red-50/90 p-3.5'
+                }
+              >
+                <p
+                  className={
+                    dark
+                      ? 'mb-1 text-[0.65rem] font-extrabold uppercase tracking-wide text-red-300/95'
+                      : 'mb-1 text-[0.65rem] font-extrabold uppercase tracking-wide text-red-800'
+                  }
+                >
+                  Oxigenación — contenido arterial (CaO₂)
+                </p>
+                <CaO2FormulaRich dark={dark} className="text-xs leading-relaxed md:text-sm" />
+                <p
+                  className={
+                    dark
+                      ? 'mt-2 text-[0.78rem] leading-snug text-slate-400'
+                      : 'mt-2 text-[0.78rem] leading-snug text-slate-600'
+                  }
+                >
+                  Coeficientes según manual de la calculadora; SpO₂ en escala 0–100&nbsp;%.
+                </p>
+              </div>
+              <div
+                className={
+                  dark
+                    ? 'mt-3.5 rounded-xl bg-slate-800 p-3.5 text-[0.88rem] text-slate-400'
+                    : 'mt-3.5 rounded-xl bg-[#f1efe9] p-3.5 text-[0.88rem] text-slate-600'
+                }
+              >
+                Introduce solo los datos disponibles. El panel calculará TAM, GC, IC, VS, IVS,
+                RVS, IRVS, RVP, IRVP, PAPI, CaO2, DO2, DO2I, VO2, O2ER y delta PCO2 cuando existan
+                variables suficientes.
+              </div>
             </div>
-            <div className="mt-1 flex justify-between gap-2">
-              <span>CvO₂</span>
-              <span className="font-mono text-slate-200">
-                {stats.cvo2.toFixed(1)} mL/dL
-              </span>
+          </section>
+
+          <section className="flex flex-col gap-5">
+            <div className="grid grid-cols-4 grid-rows-2 gap-2 min-[400px]:gap-3 sm:gap-3.5">
+              {IMPORTANT_KEYS.map((k) => {
+                const meta = RESULTS_META[k]
+                const s = statusFor(k, results[k])
+                return (
+                  <div key={k} className={`${panel} min-w-0 p-2.5 sm:p-4`}>
+                    <div
+                      className={`mb-1 truncate text-[0.65rem] font-semibold leading-tight sm:mb-1.5 sm:text-[0.82rem] ${innerMuted}`}
+                      title={meta.label}
+                    >
+                      {meta.label}
+                    </div>
+                    <div className="truncate text-lg font-extrabold tracking-tight sm:text-2xl">
+                      {results[k] ?? '—'}{' '}
+                      <span className="text-xs font-semibold sm:text-base">{meta.unit}</span>
+                    </div>
+                    <div
+                      className={`mt-1 line-clamp-2 text-[0.7rem] font-bold leading-snug sm:mt-2 sm:text-[0.85rem] ${statusClass(s.cls, dark)}`}
+                      title={s.txt}
+                    >
+                      {s.txt}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </div>
+
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_1fr]">
+              <div className={panel}>
+                <div
+                  className={
+                    dark
+                      ? 'border-b border-slate-700 px-5 pb-2.5 pt-[18px]'
+                      : 'border-b border-[#d8d2c8] px-5 pb-2.5 pt-[18px]'
+                  }
+                >
+                  <h3 className="text-[1.08rem] font-semibold">Resultados calculados</h3>
+                </div>
+                <div className="overflow-x-auto px-5 pb-5 pt-[18px]">
+                  <table className="w-full min-w-[520px] border-collapse text-left text-[0.93rem]">
+                    <thead>
+                      <tr className={innerMuted}>
+                        <th className="pb-2 pr-3 font-bold">Parámetro</th>
+                        <th className="pb-2 pr-3 font-bold">Valor</th>
+                        <th className="pb-2 pr-3 font-bold">Referencia</th>
+                        <th className="pb-2 font-bold">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(RESULTS_META).map(([key, meta]) => {
+                        const s = statusFor(key, results[key])
+                        return (
+                          <tr
+                            key={key}
+                            className={
+                              dark ? 'border-b border-slate-700' : 'border-b border-[#d8d2c8]'
+                            }
+                          >
+                            <td className="py-2.5 pr-3 align-top">{meta.label}</td>
+                            <td className="py-2.5 pr-3 align-top">
+                              <strong>{results[key] ?? '—'}</strong> {meta.unit}
+                            </td>
+                            <td className="py-2.5 pr-3 align-top">{meta.ref}</td>
+                            <td className={`py-2.5 align-top font-semibold ${statusClass(s.cls, dark)}`}>
+                              {s.txt}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2">
+                <div className={`${panel} min-w-0`}>
+                  <div
+                    className={
+                      dark
+                        ? 'border-b border-slate-700 px-5 pb-2.5 pt-[18px]'
+                        : 'border-b border-[#d8d2c8] px-5 pb-2.5 pt-[18px]'
+                    }
+                  >
+                    <h3 className="text-[1.08rem] font-semibold">Perfil rápido</h3>
+                  </div>
+                  <div className="px-5 pb-5 pt-2">
+                    <div className="h-[260px] w-full min-[480px]:h-[280px]">
+                      <Radar data={chartData} options={chartOptions} />
+                    </div>
+                    <p className={`mt-3.5 text-[0.84rem] ${innerMuted}`}>
+                      El radar resume perfusión, poscarga, función de VD y oxigenación con una
+                      escala clínica simplificada de 0 a 100.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={`${panel} min-w-0`}>
+                  <div
+                    className={
+                      dark
+                        ? 'border-b border-slate-700 px-5 pb-2.5 pt-[18px]'
+                        : 'border-b border-[#d8d2c8] px-5 pb-2.5 pt-[18px]'
+                    }
+                  >
+                    <h3 className="text-[1.08rem] font-semibold">
+                      Mapa de shock (patrones hemodinámicos)
+                    </h3>
+                  </div>
+                  <div className="px-5 pb-5 pt-2">
+                    <div className="h-[260px] w-full min-[480px]:h-[280px]">
+                      <Radar data={shockChartData} options={shockChartOptions} />
+                    </div>
+                    <p className={`mt-3.5 text-[0.84rem] ${innerMuted}`}>
+                      Cada vértice corresponde a un tipo de shock de la tabla de referencia (GC,
+                      RVS sistémica, precarga/PVC, PAM, SvO₂ o ScvO₂). La forma se actualiza con
+                      los datos introducidos; la puntuación (0–100) refleja la semejanza con el
+                      patrón cualitativo típico, no el diagnóstico definitivo.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={panel}>
+              <div
+                className={
+                  dark
+                    ? 'border-b border-slate-700 px-5 pb-2.5 pt-[18px]'
+                    : 'border-b border-[#d8d2c8] px-5 pb-2.5 pt-[18px]'
+                }
+              >
+                <h3 className="text-[1.08rem] font-semibold">Tabla de referencia</h3>
+              </div>
+              <div className="px-5 pb-5 pt-[18px]">
+                <div className="mb-3.5 flex flex-wrap items-center gap-2.5">
+                  <label htmlFor="categoryFilter" className={`text-sm font-bold ${innerMuted}`}>
+                    Agrupar / filtrar:
+                  </label>
+                  <select
+                    id="categoryFilter"
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className={`min-w-[220px] rounded-xl px-3 py-2.5 text-sm outline-none ring-teal-600/30 focus:ring-2 ${fieldBg}`}
+                  >
+                    <option value="Todas">Todas las categorías</option>
+                    {categoryOptions().map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1020px] border-collapse text-left">
+                    <thead>
+                      <tr className={innerMuted}>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">Categoría</th>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">Sigla</th>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">
+                          Nombre del parámetro
+                        </th>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">Fórmula / origen</th>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">Normal</th>
+                        <th className="pb-2 pr-3 text-[0.93rem] font-bold">Unidad</th>
+                        <th className="pb-2 text-[0.93rem] font-bold">Significado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ReferenceTableRows filter={categoryFilter} dark={dark} />
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
-
-      <section className="space-y-8 lg:col-span-8">
-        <ResultSection
-          icon={Droplets}
-          title="I. Oxigenación y metabolismo"
-          color="text-red-500"
-        >
-          <ParameterCard
-            title="DO₂ indexado"
-            value={stats.do2i}
-            unit="mL/min/m²"
-            min={520}
-            max={570}
-            color="border-red-500"
-          />
-          <ParameterCard
-            title="VO₂ (consumo)"
-            value={stats.vo2}
-            unit="mL/min"
-            min={110}
-            max={160}
-            color="border-red-400"
-          />
-          <ParameterCard
-            title="Extracción (O₂ER)"
-            value={stats.o2er}
-            unit="%"
-            min={20}
-            max={30}
-            color="border-orange-500"
-          />
-        </ResultSection>
-
-        <ResultSection
-          icon={Activity}
-          title="II. Rendimiento mecánico"
-          color="text-blue-500"
-        >
-          <ParameterCard
-            title="Índice cardíaco"
-            value={stats.ic}
-            unit="L/min/m²"
-            min={2.4}
-            max={4.0}
-            color="border-blue-500"
-          />
-          <ParameterCard
-            title="Poder cardíaco"
-            value={stats.cpo}
-            unit="W"
-            min={1.0}
-            max={2.0}
-            color="border-indigo-500"
-          />
-          <ParameterCard
-            title="IRVS"
-            value={stats.irvs}
-            unit="din·s·m²"
-            min={1600}
-            max={2400}
-            color="border-emerald-500"
-          />
-        </ResultSection>
-
-        <ResultSection
-          icon={Wind}
-          title="III. Circulación pulmonar"
-          color="text-cyan-500"
-        >
-          <ParameterCard
-            title="Gap CO₂"
-            value={stats.gapCo2}
-            unit="mmHg"
-            min={2}
-            max={6}
-            color="border-slate-800"
-          />
-          <ParameterCard
-            title="PAPI"
-            value={stats.papi}
-            unit="índice"
-            min={1.85}
-            max={5.0}
-            color="border-cyan-500"
-          />
-          <ParameterCard
-            title="Agua pulmonar (ELWI)"
-            value={inputs.elwi}
-            unit="mL/kg"
-            min={3}
-            max={7}
-            color="border-blue-300"
-          />
-        </ResultSection>
-
-        <p className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-xs leading-relaxed text-amber-900">
-          <strong className="font-bold">Nota:</strong> Los rangos de referencia son
-          orientativos; la interpretación es clínica y depende del contexto
-          (sedación, sepsis, soporte, etc.).
-        </p>
-      </section>
+      </div>
     </div>
   )
 }
