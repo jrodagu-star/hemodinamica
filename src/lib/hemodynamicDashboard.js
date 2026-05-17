@@ -1,3 +1,5 @@
+import { surfaceAreaM2 } from './hemodynamics.js'
+
 /**
  * Datos de referencia del manual.
  * [categoría, sigla, nombre del parámetro, fórmula / origen, valor normal, unidad, significado clínico]
@@ -289,6 +291,9 @@ export const REFERENCE_ROWS = [
  * Sirven solo para la codificación por colores en datos de entrada.
  */
 export const INPUT_NORMAL_RANGE = {
+  edad: [18, 95],
+  peso: [42, 130],
+  altura: [145, 200],
   pas: [90, 135],
   pad: [60, 85],
   fc: [60, 100],
@@ -329,6 +334,15 @@ export function inputRangeStatus(fieldId, rawValue) {
  * Cada campo: [id, etiqueta, placeholder unidad]
  */
 export const INPUT_FIELD_GROUPS = [
+  {
+    id: 'anthropometry',
+    title: 'Antropometría',
+    fields: [
+      ['edad', 'Edad', 'años'],
+      ['peso', 'Peso', 'kg'],
+      ['altura', 'Altura', 'cm'],
+    ],
+  },
   {
     id: 'pressure_fc',
     title: 'Tensión arterial y frecuencia',
@@ -521,6 +535,33 @@ export function round(v, n = 2) {
   return Number.isFinite(v) ? Number(v.toFixed(n)) : null
 }
 
+/**
+ * IMC (kg/m²) y ASC por Du Bois (m²) a partir de peso (kg) y altura (cm).
+ * La edad se devuelve parseada para la UI; no entra aún en fórmulas hemodinámicas.
+ * @param {Record<string, string>} raw
+ */
+export function computeAnthropometrics(raw) {
+  const edadV = parseFloat(raw.edad)
+  const peso = parseFloat(raw.peso)
+  const altura = parseFloat(raw.altura)
+
+  const edad = Number.isFinite(edadV) && edadV > 0 ? edadV : null
+
+  if (!Number.isFinite(peso) || !Number.isFinite(altura) || altura <= 0 || peso <= 0) {
+    return { edad, imc: null, ascDuBois: null }
+  }
+
+  const alturaM = altura / 100
+  const imc = peso / (alturaM * alturaM)
+  const ascDuBois = surfaceAreaM2(peso, altura)
+
+  return {
+    edad,
+    imc: round(imc, 2),
+    ascDuBois: round(ascDuBois, 3),
+  }
+}
+
 export function statusFor(key, value) {
   const meta = RESULTS_META[key] || {}
   if (value == null) return { txt: 'No calculable', cls: 'warn' }
@@ -571,8 +612,11 @@ export function computeResults(raw) {
   const pas = val('pas'),
     pad = val('pad'),
     fc = val('fc'),
-    asc = val('asc'),
     pvc = val('pvc')
+  const ascManual = val('asc')
+  const { ascDuBois } = computeAnthropometrics(raw)
+  const asc =
+    ascManual != null && ascManual > 0 ? ascManual : ascDuBois != null ? ascDuBois : null
   let gc = val('gc')
   const paop = val('paop'),
     paps = val('paps'),

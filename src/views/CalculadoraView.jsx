@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Chart as ChartJS,
   Filler,
@@ -11,6 +11,7 @@ import { Radar } from 'react-chartjs-2'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 import {
   categoryOptions,
+  computeAnthropometrics,
   computeResults,
   IMPORTANT_KEYS,
   INPUT_FIELD_GROUPS,
@@ -167,8 +168,31 @@ export function CalculadoraView() {
   const [categoryFilter, setCategoryFilter] = useState('Todas')
   const [dark, setDark] = useState(false)
   const [examplePresetId, setExamplePresetId] = useState('')
+  /** Si el usuario escribe ASC a mano (o carga un ejemplo con ASC), no lo sobrescribe el Du Bois. */
+  const [ascOverridden, setAscOverridden] = useState(false)
 
   const results = useMemo(() => computeResults(inputs), [inputs])
+
+  const anthropo = useMemo(() => computeAnthropometrics(inputs), [inputs])
+
+  useEffect(() => {
+    if (ascOverridden) return
+    const d = anthropo.ascDuBois
+    if (d == null) {
+      setInputs((prev) => {
+        if (prev.asc.trim() === '') return prev
+        return { ...prev, asc: '' }
+      })
+      return
+    }
+    const nextStr = String(d)
+    setInputs((prev) => {
+      const cur = parseFloat(prev.asc)
+      if (Number.isFinite(cur) && Math.abs(cur - d) < 0.0005) return prev
+      if (prev.asc === nextStr) return prev
+      return { ...prev, asc: nextStr }
+    })
+  }, [anthropo.ascDuBois, ascOverridden])
 
   const chartData = useMemo(() => {
     const primary = dark ? '#5fd4cb' : '#0f766e'
@@ -282,11 +306,13 @@ export function CalculadoraView() {
     })
     setInputs(next)
     setExamplePresetId(presetId)
+    setAscOverridden(true)
   }
 
   const clearAll = () => {
     setInputs(emptyInputs())
     setExamplePresetId('')
+    setAscOverridden(false)
   }
 
   const panel = dark
@@ -485,7 +511,11 @@ export function CalculadoraView() {
                                 step="any"
                                 placeholder={unit}
                                 value={inputs[id]}
-                                onChange={(e) => setField(id, e.target.value)}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  if (id === 'asc') setAscOverridden(v.trim() !== '')
+                                  setField(id, v)
+                                }}
                                 className={`min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-xs outline-none focus:ring-2 ${tone}`}
                               />
                             </div>
@@ -493,6 +523,73 @@ export function CalculadoraView() {
                         )
                       })}
                     </div>
+                    {group.id === 'pressure_fc' && (
+                      <div
+                        className={
+                          dark
+                            ? 'mt-3 rounded-lg border border-slate-600 bg-slate-800/60 p-2.5'
+                            : 'mt-3 rounded-lg border border-slate-200 bg-white/85 p-2.5'
+                        }
+                      >
+                        <div
+                          className={`text-[0.65rem] font-extrabold uppercase tracking-wide ${innerMuted}`}
+                        >
+                          TAM (automática)
+                        </div>
+                        <div
+                          className={`font-mono text-sm font-bold tabular-nums ${dark ? 'text-slate-100' : 'text-slate-900'}`}
+                        >
+                          {results.tam != null ? `${results.tam} mmHg` : '—'}
+                        </div>
+                        <p className={`mt-0.5 text-[0.68rem] leading-snug ${innerMuted}`}>
+                          Tensión arterial media: (PAS + 2 × PAD) / 3. Introduce PAS y PAD.
+                        </p>
+                      </div>
+                    )}
+                    {group.id === 'anthropometry' && (
+                      <div
+                        className={
+                          dark
+                            ? 'mt-3 grid grid-cols-1 gap-2.5 rounded-lg border border-slate-600 bg-slate-800/60 p-2.5 sm:grid-cols-2'
+                            : 'mt-3 grid grid-cols-1 gap-2.5 rounded-lg border border-slate-200 bg-white/85 p-2.5 sm:grid-cols-2'
+                        }
+                      >
+                        <div className="min-w-0">
+                          <div
+                            className={`text-[0.65rem] font-extrabold uppercase tracking-wide ${innerMuted}`}
+                          >
+                            IMC (automático)
+                          </div>
+                          <div
+                            className={`font-mono text-sm font-bold tabular-nums ${dark ? 'text-slate-100' : 'text-slate-900'}`}
+                          >
+                            {anthropo.imc != null ? `${anthropo.imc} kg/m²` : '—'}
+                          </div>
+                          <p className={`mt-0.5 text-[0.68rem] leading-snug ${innerMuted}`}>
+                            Peso (kg) ÷ altura (m)².
+                          </p>
+                        </div>
+                        <div className="min-w-0">
+                          <div
+                            className={`text-[0.65rem] font-extrabold uppercase tracking-wide ${innerMuted}`}
+                          >
+                            ASC Du Bois (automático)
+                          </div>
+                          <div
+                            className={`font-mono text-sm font-bold tabular-nums ${dark ? 'text-slate-100' : 'text-slate-900'}`}
+                          >
+                            {anthropo.ascDuBois != null ? `${anthropo.ascDuBois} m²` : '—'}
+                          </div>
+                          <p className={`mt-0.5 text-[0.68rem] leading-snug ${innerMuted}`}>
+                            {ascOverridden
+                              ? 'Has indicado ASC a mano en el bloque inferior: los índices usan ese valor.'
+                              : anthropo.ascDuBois != null
+                                ? 'El ASC del bloque inferior se completa solo (Du Bois) según peso y altura.'
+                                : 'Indica peso y altura para estimar ASC, o escribe ASC a mano abajo.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -530,9 +627,11 @@ export function CalculadoraView() {
                     : 'mt-3.5 rounded-xl bg-[#f1efe9] p-3.5 text-[0.88rem] text-slate-600'
                 }
               >
-                Introduce solo los datos disponibles. El panel calculará TAM, GC, IC, VS, IVS,
-                RVS, IRVS, RVP, IRVP, PAPI, CaO2, DO2, DO2I, VO2, O2ER y delta PCO2 cuando existan
-                variables suficientes.
+                Introduce solo los datos disponibles. Con peso y altura se calculan IMC y ASC (Du
+                Bois); el ASC estimado se escribe automáticamente en el campo ASC salvo que lo
+                edites a mano o cargues un ejemplo. La edad queda registrada para contexto clínico.
+                El panel calculará TAM, GC, IC, VS, IVS, RVS, IRVS, RVP, IRVP, PAPI, CaO2, DO2, DO2I,
+                VO2, O2ER y delta PCO2 cuando existan variables suficientes.
               </div>
             </div>
           </section>
