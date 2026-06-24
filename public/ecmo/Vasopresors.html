@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Protocolo práctico: Noradrenalina y Vasopresina — Línea de tiempo</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --muted:#556; --accent:#0b5cff;
+    --vaso:#e74c3c; --vaso-2:#c0392b; --adj:#f59e0b; --ok:#10b981;
+    --font:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+  }
+  body{font-family:var(--font);background:var(--bg);color:#0b1220;margin:18px;padding-bottom:40px;}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  h1{font-size:20px;margin:0;color:var(--accent)}
+  p.lead{margin:6px 0 18px 0;color:var(--muted);font-size:14px}
+  .layout{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+  .card{background:var(--card);border:1px solid #e6eef6;padding:12px;border-radius:8px;box-shadow:0 1px 2px rgba(11,17,32,0.04)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px 10px;border-bottom:1px solid #eef3f8;text-align:left;vertical-align:middle}
+  th{background:#fbfdff;font-weight:700;color:#0b2b4a}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;color:#fff;font-weight:700;font-size:12px}
+  .badge.nor{background:var(--vaso)}
+  .badge.vas{background:var(--adj)}
+  .timeline{margin-top:8px;border-left:3px solid #e6eef6;padding-left:12px}
+  .step{position:relative;padding:10px 12px;margin:10px 0;border-radius:6px;background:#fff;border:1px solid #f0f6fb}
+  .step:before{content:"";position:absolute;left:-28px;top:14px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+  .small{font-size:13px;color:var(--muted)}
+  .key{font-weight:700;color:#0b2b4a}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+  .calc{background:#fbfbff;border-left:4px solid var(--accent);padding:8px;border-radius:6px}
+  .table-compact th, .table-compact td{padding:6px 8px;font-size:13px}
+  .print-note{font-size:12px;color:#666;margin-top:10px}
+  .patient-panel{
+    background:linear-gradient(180deg,#fff,#f3f7ff);
+    border:1px solid #c7d9f5;border-radius:8px;padding:12px 14px;margin-bottom:14px;
+  }
+  .patient-panel h2{margin:0 0 10px;font-size:15px;color:#0b2b4a}
+  .patient-row{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;font-weight:700;color:#334155}
+  .field input[type="number"]{
+    width:7rem;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;
+  }
+  .field select{max-width:22rem;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px}
+  .check-row{display:flex;align-items:flex-start;gap:8px;max-width:42rem}
+  .check-row input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
+  .mlh-hint{font-size:12px;color:#0f766e;font-weight:700;margin-top:6px}
+  @media (max-width:980px){.layout{grid-template-columns:1fr}}
+  @media print{
+    body{margin:6mm}
+    .layout{grid-template-columns:1fr}
+    header h1{font-size:16px}
+    .patient-panel{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Noradrenalina y Vasopresina — Esquema práctico en línea de tiempo</h1>
+</header>
+
+<p class="lead">Hoja rápida para UCI/guardia: cuándo iniciar, cómo escalar y desescalar. Indique el <strong>peso</strong> y, si lo desea, active el cálculo con las <strong>mezclas de la tabla de preparaciones</strong> para ver la línea de tiempo también en <strong>mL/h</strong>. Siempre optimizar volumen y monitorizar PAM invasiva, perfusión y efectos adversos.</p>
+
+<div class="layout">
+
+  <!-- Main column -->
+  <div class="card">
+
+    <div class="patient-panel">
+      <h2>Paciente y mezcla de referencia</h2>
+      <div class="patient-row">
+        <div class="field">
+          <label for="pesoPaciente">Peso (kg)</label>
+          <input type="number" id="pesoPaciente" min="1" max="300" step="0.1" value="70" inputmode="decimal"/>
+        </div>
+        <div class="field">
+          <label for="mezclaNor">Noradrenalina — mezcla de la tabla</label>
+          <select id="mezclaNor">
+            <option value="80">80 µg/mL — 4 mg en 50 mL SF</option>
+            <option value="160" selected>160 µg/mL — 8 mg en 50 mL (equiv. 16 mg/100 mL)</option>
+          </select>
+        </div>
+      </div>
+      <div class="check-row" style="margin-top:12px">
+        <input type="checkbox" id="usarTablaPrep" aria-describedby="helpTabla"/>
+        <label for="usarTablaPrep" class="small" style="margin:0;line-height:1.45;color:#1e293b">
+          <strong>Calcular mL/h</strong> con las concentraciones de la tabla <strong>«Preparaciones y concentraciones prácticas»</strong> (Noradrenalina según opción; Vasopresina <strong>0,4 U/mL</strong> — 20 U en 50 mL SF) y mostrarlas en la línea de tiempo.
+        </label>
+      </div>
+      <p id="helpTabla" class="small" style="margin:8px 0 0">Si desactiva la casilla, la línea de tiempo solo muestra µg/kg/min y U/min, sin mL/h.</p>
+      <div id="resumenMlH" class="mlh-hint" role="status" aria-live="polite" style="display:none"></div>
+    </div>
+
+    <h2 style="margin-top:0;font-size:16px">Preparaciones y concentraciones prácticas</h2>
+    <p class="small" style="margin-top:4px">Usar concentraciones validadas por farmacia del centro. Estas filas son la referencia para el cálculo de mL/h cuando marca la casilla superior.</p>
+
+    <table class="table-compact" id="tablaPreparaciones" style="margin-top:8px">
+      <thead><tr><th>Fármaco</th><th>Preparación ejemplo</th><th>Concentración</th><th>Conversión (70 kg)</th></tr></thead>
+      <tbody>
+        <tr data-na-ugml="80">
+          <td class="small"><strong>Noradrenalina</strong></td>
+          <td class="small">4 mg (4000 µg) en 50 mL SF</td>
+          <td class="small">80 µg/mL</td>
+          <td class="small conv-70-na80">Para 70 kg: 0,05 µg/kg/min = 3,5 µg/min → 2,6 mL/h</td>
+        </tr>
+        <tr data-na-ugml="160">
+          <td class="small"><strong>Noradrenalina (alternativa)</strong></td>
+          <td class="small">8 mg en 50 mL → 160 µg/mL</td>
+          <td class="small">160 µg/mL</td>
+          <td class="small conv-70-na160">0,1 µg/kg/min (70 kg) = 7 µg/min → 2,6 mL/h</td>
+        </tr>
+        <tr data-vas-upl="0.4">
+          <td class="small"><strong>Vasopresina</strong></td>
+          <td class="small">20 U en 50 mL SF</td>
+          <td class="small">0,4 U/mL</td>
+          <td class="small conv-70-vas">0,03 U/min → 4,5 mL/h</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:16px;font-size:16px">Resumen rápido</h2>
+    <p class="small"><span class="key">Inicio:</span> Noradrenalina primera línea si PAM <strong>&lt;65 mmHg</strong> tras optimizar volumen. <span class="key">Añadir vasopresina</span> (coadyuvante) si necesidad persistente de altas dosis de noradrenalina o para reducir catecolaminas.</p>
+
+    <h3 style="margin-bottom:6px">Línea de tiempo (0 → 24 h)</h3>
+    <div class="timeline" id="timeline">
+
+      <div class="step">
+        <div class="key">0–5 min — Rescate inicial</div>
+        <p class="small" id="tl-step1">Bolo de cristaloide si hipovolemia sospechada. Si PAM no recupera: <span class="badge nor">Noradrenalina</span> iniciar <strong>0,05 µg/kg/min</strong> (o 5–10 µg/min en adulto medio) y monitorizar.</p>
+      </div>
+
+      <div class="step">
+        <div class="key">5–30 min — Titración rápida</div>
+        <p class="small" id="tl-step2">Aumentar noradrenalina en incrementos de <strong>0,02–0,05 µg/kg/min</strong> cada 5–15 min hasta PAM objetivo. Si se requieren &gt;0,2–0,3 µg/kg/min o respuesta inadecuada, <span class="badge vas">añadir Vasopresina 0,03 U/min</span> como coadyuvante.</p>
+      </div>
+
+      <div class="step">
+        <div class="key">30–120 min — Estabilización</div>
+        <p class="small" id="tl-step3">Mantener PAM objetivo con la menor dosis efectiva. Si bajo gasto persistente, añadir inotrópico (dobutamina/milrinona) y valorar soporte mecánico si refractario.</p>
+      </div>
+
+      <div class="step">
+        <div class="key">2–24 h — Mantenimiento y reevaluación</div>
+        <p class="small" id="tl-step4">Reevaluar cada 1–2 h. Si estable, iniciar desescalado: <strong>reducir vasopresina primero</strong> (si presente), luego noradrenalina en decrementos del 10–20% cada 15–30 min según tolerancia.</p>
+      </div>
+
+    </div>
+
+    <h3 style="margin-top:12px">Protocolos de inicio, escalado y desescalado</h3>
+
+    <table class="table-compact" style="width:100%;margin-top:8px">
+      <thead>
+        <tr><th style="width:36%">Situación clínica</th><th style="width:32%">Acción inicial</th><th>Escalado / Desescalado</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="small">PAM &lt;65 mmHg tras bolo y sin respuesta</td>
+          <td class="small"><span class="badge nor">Noradrenalina</span> iniciar 0,05 µg/kg/min</td>
+          <td class="small">Aumentar 0,02–0,05 µg/kg/min cada 5–15 min hasta PAM objetivo</td>
+        </tr>
+        <tr>
+          <td class="small">Necesidad persistente de noradrenalina &gt;0,2–0,3 µg/kg/min</td>
+          <td class="small">Añadir <span class="badge vas">Vasopresina 0,03 U/min</span> (dosis fija)</td>
+          <td class="small">Mantener vasopresina; intentar reducir noradrenalina en 10–20% si PAM estable</td>
+        </tr>
+        <tr>
+          <td class="small">Shock refractario (hipotensión persistente)</td>
+          <td class="small">Considerar epinefrina o medidas avanzadas (ECMO/VAD) y consulta cardiología</td>
+          <td class="small">Si mejora, retirar vasopresina primero; luego disminuir catecolaminas</td>
+        </tr>
+        <tr>
+          <td class="small">Isquemia periférica o efectos adversos</td>
+          <td class="small">Reducir catecolaminas; valorar vasopresina retirada si contribuye a isquemia</td>
+          <td class="small">Desescalar lentamente y monitorizar perfusión</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="grid" style="margin-top:10px">
+      <div class="calc">
+        <div class="key">Ejemplo cálculo noradrenalina</div>
+        <p class="small" id="calc-na">Noradrenalina 0,05 µg/kg/min → según peso y concentración (active la casilla superior).</p>
+      </div>
+      <div class="calc">
+        <div class="key">Vasopresina (0,03 U/min)</div>
+        <p class="small" id="calc-vas">Concentración 0,4 U/mL → 0,03/0,4 = 0,075 mL/min = 4,5 mL/h (independiente del peso).</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:12px">Cómo escalar y desescalar (reglas prácticas)</h3>
+    <ul class="small">
+      <li><span class="key">Escalado:</span> aumentar noradrenalina en pasos pequeños (0,02–0,05 µg/kg/min) cada 5–15 min; si &gt;0,2–0,3 µg/kg/min o efectos adversos, añadir vasopresina 0,03 U/min.</li>
+      <li><span class="key">Desescalado:</span> cuando PAM y perfusión estables, reducir vasopresina primero (ej. 0,01 U/min cada 15–30 min o retirar si estable), luego disminuir noradrenalina en decrementos del 10–20% cada 15–30 min.</li>
+      <li class="small">Si PAM cae tras reducción → volver al último nivel estable, revisar volumen, dolor, sedación, ritmo y causas reversibles.</li>
+    </ul>
+
+    <h3 style="margin-top:12px">Monitorización y señales de alarma</h3>
+    <div class="small">
+      <ul>
+        <li>PAM invasiva, frecuencia cardiaca, ECG continuo.</li>
+        <li>Diuresis, lactato, perfusión periférica (pulsos, llenado capilar).</li>
+        <li>Signos de isquemia periférica (palidez, dolor, acrocianosis) → reevaluar dosis.</li>
+        <li>Arritmias o aumento del consumo de O₂ → valorar reducción de catecolaminas.</li>
+      </ul>
+    </div>
+
+    <p class="print-note">Nota: las cifras son orientativas. Ajustar según protocolo local, peso real del paciente y función orgánica. Documentar cada cambio de dosis y respuesta.</p>
+
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="card">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(180deg,var(--vaso),var(--vaso-2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">NA</div>
+      <div>
+        <div class="key">Noradrenalina</div>
+        <p class="small" id="side-na">Inicio 0,05–0,1 µg/kg/min. Titrar por PAM. Riesgo: arritmias, isquemia.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(180deg,var(--adj),#d97706);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">VP</div>
+      <div>
+        <div class="key">Vasopresina</div>
+        <p class="small" id="side-vas">Dosis fija 0,01–0,04 U/min (0,03 U/min frecuente). Usar como coadyuvante.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:8px">
+      <div class="key">Checklist rápido antes de escalar</div>
+      <ul class="small">
+        <li>Optimizar volumen (eco/PAOP si disponible).</li>
+        <li>Confirmar sedación/analgesia y ritmo.</li>
+        <li>Revisar fármacos concomitantes y compatibilidades.</li>
+        <li>Documentar objetivo PAM y plan de desescalado.</li>
+      </ul>
+    </div>
+
+    <div style="margin-top:10px">
+      <div class="key">Conversión mL/h (fórmula)</div>
+      <p class="small"><strong>Noradrenalina (µg/kg/min):</strong> mL/h = (µg/kg/min × peso kg × 60) / (µg/mL de la mezcla).</p>
+      <p class="small"><strong>Vasopresina (U/min):</strong> mL/h = (U/min × 60) / (U/mL de la mezcla). Con 0,4 U/mL no depende del peso.</p>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+(function () {
+  var VAS_U_PER_ML = 0.4
+  var VAS_DOSE_U_MIN = 0.03
+
+  function parseWeight() {
+    var el = document.getElementById('pesoPaciente')
+    var v = parseFloat(el && el.value)
+    if (!isFinite(v) || v <= 0) return 70
+    return v
+  }
+
+  function naUgPerMl() {
+    var sel = document.getElementById('mezclaNor')
+    return sel && sel.value === '80' ? 80 : 160
+  }
+
+  function fmtNum(x) {
+    if (!isFinite(x)) return '—'
+    var s = x.toFixed(1)
+    return s.replace('.', ',')
+  }
+
+  /** µg/kg/min → mL/h given concentration µg/mL */
+  function naMlH(ugKgMin, weightKg, ugPerMl) {
+    var ugMin = ugKgMin * weightKg
+    return (ugMin / ugPerMl) * 60
+  }
+
+  function vasMlH(uPerMin, uPerMl) {
+    return (uPerMin / uPerMl) * 60
+  }
+
+  function baseStep1Html(w, useMl, cUg) {
+    var s =
+      'Bolo de cristaloide si hipovolemia sospechada. Si PAM no recupera: <span class="badge nor">Noradrenalina</span> iniciar <strong>0,05 µg/kg/min</strong> (o 5–10 µg/min en adulto medio) y monitorizar.'
+    if (!useMl) return s
+    var ml = naMlH(0.05, w, cUg)
+    return (
+      s +
+      ' Equiv. a <strong>' +
+      fmtNum(ml) +
+      ' mL/h</strong> con mezcla <strong>' +
+      cUg +
+      ' µg/mL</strong> (' +
+      fmtNum(w) +
+      ' kg).'
+    )
+  }
+
+  function baseStep2Html(w, useMl, cUg) {
+    var s =
+      'Aumentar noradrenalina en incrementos de <strong>0,02–0,05 µg/kg/min</strong> cada 5–15 min hasta PAM objetivo. Si se requieren &gt;0,2–0,3 µg/kg/min o respuesta inadecuada, <span class="badge vas">añadir Vasopresina 0,03 U/min</span> como coadyuvante.'
+    if (!useMl) return s
+    var lo = naMlH(0.2, w, cUg)
+    var hi = naMlH(0.3, w, cUg)
+    var vml = vasMlH(VAS_DOSE_U_MIN, VAS_U_PER_ML)
+    return (
+      'Aumentar noradrenalina en incrementos de <strong>0,02–0,05 µg/kg/min</strong> cada 5–15 min hasta PAM objetivo. A <strong>0,2–0,3 µg/kg/min</strong> el caudal sería aprox. <strong>' +
+      fmtNum(lo) +
+      '–' +
+      fmtNum(hi) +
+      ' mL/h</strong> (mezcla ' +
+      cUg +
+      ' µg/mL; peso ' +
+      fmtNum(w) +
+      ' kg). Si se requieren esas tasas o respuesta inadecuada, <span class="badge vas">añadir Vasopresina 0,03 U/min</span> ≈ <strong>' +
+      fmtNum(vml) +
+      ' mL/h</strong> (mezcla 0,4 U/mL).'
+    )
+  }
+
+  function updateConvRow70() {
+    var w = parseWeight()
+    var c80 = naMlH(0.05, w, 80)
+    var c160a = naMlH(0.1, w, 160)
+    var el80 = document.querySelector('.conv-70-na80')
+    var el160 = document.querySelector('.conv-70-na160')
+    var elVas = document.querySelector('.conv-70-vas')
+    var vml = vasMlH(VAS_DOSE_U_MIN, VAS_U_PER_ML)
+    if (el80) {
+      el80.textContent =
+        'A ' +
+        fmtNum(w) +
+        ' kg: 0,05 µg/kg/min = ' +
+        fmtNum(0.05 * w) +
+        ' µg/min → ' +
+        fmtNum(naMlH(0.05, w, 80)) +
+        ' mL/h (80 µg/mL)'
+    }
+    if (el160) {
+      el160.textContent =
+        '0,1 µg/kg/min (' +
+        fmtNum(w) +
+        ' kg) = ' +
+        fmtNum(0.1 * w) +
+        ' µg/min → ' +
+        fmtNum(naMlH(0.1, w, 160)) +
+        ' mL/h (160 µg/mL)'
+    }
+    if (elVas) {
+      elVas.textContent = '0,03 U/min → ' + fmtNum(vml) + ' mL/h (0,4 U/mL)'
+    }
+  }
+
+  function refresh() {
+    var w = parseWeight()
+    var use = document.getElementById('usarTablaPrep').checked
+    var cUg = naUgPerMl()
+    var sum = document.getElementById('resumenMlH')
+    var t1 = document.getElementById('tl-step1')
+    var t2 = document.getElementById('tl-step2')
+    var calcNa = document.getElementById('calc-na')
+    var calcVas = document.getElementById('calc-vas')
+    var sideNa = document.getElementById('side-na')
+    var sideVas = document.getElementById('side-vas')
+
+    updateConvRow70()
+
+    if (t1) t1.innerHTML = baseStep1Html(w, use, cUg)
+    if (t2) t2.innerHTML = baseStep2Html(w, use, cUg)
+
+    var startMl = naMlH(0.05, w, cUg)
+    var vasMl = vasMlH(VAS_DOSE_U_MIN, VAS_U_PER_ML)
+
+    if (calcNa) {
+      if (use) {
+        var ugm = 0.05 * w
+        calcNa.innerHTML =
+          'A <strong>' +
+          fmtNum(w) +
+          ' kg</strong>, 0,05 µg/kg/min = ' +
+          fmtNum(ugm) +
+          ' µg/min. Con <strong>' +
+          cUg +
+          ' µg/mL</strong> → <strong>' +
+          fmtNum(startMl) +
+          ' mL/h</strong>.'
+      } else {
+        calcNa.textContent =
+          'Noradrenalina 0,05 µg/kg/min → active la casilla superior para ver mL/h según peso y mezcla.'
+      }
+    }
+
+    if (calcVas) {
+      calcVas.innerHTML =
+        'Concentración <strong>0,4 U/mL</strong> (20 U/50 mL). 0,03 U/min → <strong>' +
+        fmtNum(vasMl) +
+        ' mL/h</strong> (no depende del peso).'
+    }
+
+    if (sideNa) {
+      sideNa.innerHTML = use
+        ? 'Inicio <strong>0,05 µg/kg/min</strong> ≈ <strong>' +
+            fmtNum(startMl) +
+            ' mL/h</strong> (' +
+            cUg +
+            ' µg/mL; ' +
+            fmtNum(w) +
+            ' kg). Titrar por PAM.'
+        : 'Inicio 0,05–0,1 µg/kg/min. Titrar por PAM. Riesgo: arritmias, isquemia.'
+    }
+
+    if (sideVas) {
+      sideVas.innerHTML = use
+        ? '<strong>0,03 U/min</strong> ≈ <strong>' +
+            fmtNum(vasMl) +
+            ' mL/h</strong> (0,4 U/mL). Rango habitual 0,01–0,04 U/min.'
+        : 'Dosis fija 0,01–0,04 U/min (0,03 U/min frecuente). Usar como coadyuvante.'
+    }
+
+    if (sum) {
+      if (use) {
+        sum.style.display = 'block'
+        sum.textContent =
+          'Peso ' +
+          fmtNum(w) +
+          ' kg · NA ' +
+          cUg +
+          ' µg/mL → inicio 0,05 µg/kg/min = ' +
+          fmtNum(startMl) +
+          ' mL/h. Vasopresina 0,03 U/min = ' +
+          fmtNum(vasMl) +
+          ' mL/h (0,4 U/mL).'
+      } else {
+        sum.style.display = 'none'
+        sum.textContent = ''
+      }
+    }
+  }
+
+  document.getElementById('pesoPaciente').addEventListener('input', refresh)
+  document.getElementById('pesoPaciente').addEventListener('change', refresh)
+  document.getElementById('mezclaNor').addEventListener('change', refresh)
+  document.getElementById('usarTablaPrep').addEventListener('change', refresh)
+  refresh()
+})()
+</script>
+
+</body>
+</html>
