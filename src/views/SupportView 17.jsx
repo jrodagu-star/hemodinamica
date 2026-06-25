@@ -913,14 +913,14 @@ function parseSatPercent(raw) {
   return Number.isFinite(n) ? n : null
 }
 
-function computeRecirculationPct(satPostMb, satArt, satPreMembrane) {
-  const post = parseSatPercent(satPostMb)
-  const art = parseSatPercent(satArt)
+function computeRecirculationPct(satPreMembrane, satPostMb, satSvO2) {
   const pre = parseSatPercent(satPreMembrane)
-  if (post == null || art == null || pre == null) return null
-  const denom = post - pre
+  const post = parseSatPercent(satPostMb)
+  const svo2 = parseSatPercent(satSvO2)
+  if (pre == null || post == null || svo2 == null) return null
+  const denom = post - svo2
   if (denom <= 0) return null
-  const pct = ((post - art) / denom) * 100
+  const pct = ((pre - svo2) / denom) * 100
   return Number.isFinite(pct) ? pct : null
 }
 
@@ -956,17 +956,17 @@ const RECIRCULATION_TONE_CLASS = {
 function EcmoRecirculationCalculator() {
   const [satPreMembrane, setSatPreMembrane] = useState('')
   const [satPostMb, setSatPostMb] = useState('')
-  const [satArt, setSatArt] = useState('')
+  const [satSvO2, setSatSvO2] = useState('')
 
-  const pct = computeRecirculationPct(satPostMb, satArt, satPreMembrane)
+  const pct = computeRecirculationPct(satPreMembrane, satPostMb, satSvO2)
   const classification = classifyRecirculation(pct)
-  const hasAllInputs = satPostMb !== '' && satArt !== '' && satPreMembrane !== ''
+  const hasAllInputs = satPostMb !== '' && satSvO2 !== '' && satPreMembrane !== ''
   const invalidDenominator =
     hasAllInputs &&
     pct == null &&
     parseSatPercent(satPostMb) != null &&
-    parseSatPercent(satPreMembrane) != null &&
-    parseSatPercent(satPostMb) <= parseSatPercent(satPreMembrane)
+    parseSatPercent(satSvO2) != null &&
+    parseSatPercent(satPostMb) <= parseSatPercent(satSvO2)
 
   const resultTone =
     pct != null && classification
@@ -987,6 +987,15 @@ function EcmoRecirculationCalculator() {
       placeholder: '65',
     },
     {
+      id: 'sat-svo2',
+      symbol: 'SvO₂',
+      label: 'Saturación venosa mixta',
+      hint: 'Muestra de arteria pulmonar (Swan-Ganz)',
+      value: satSvO2,
+      onChange: setSatSvO2,
+      placeholder: '72',
+    },
+    {
       id: 'sat-post-mb',
       symbol: 'SaO₂,postMB',
       label: 'Saturación post-membrana',
@@ -994,15 +1003,6 @@ function EcmoRecirculationCalculator() {
       value: satPostMb,
       onChange: setSatPostMb,
       placeholder: '98',
-    },
-    {
-      id: 'sat-art',
-      symbol: 'SaO₂,art',
-      label: 'Saturación arterial',
-      hint: 'Gasometría arterial del paciente',
-      value: satArt,
-      onChange: setSatArt,
-      placeholder: '88',
     },
   ]
 
@@ -1021,24 +1021,25 @@ function EcmoRecirculationCalculator() {
           <span className="font-medium text-slate-500">=</span>
           <div className="flex flex-col items-center font-serif">
             <span className="px-2 pb-1 text-center leading-tight">
-              SaO<sub className="text-[0.72em]">2,postMB</sub>
+              SaO<sub className="text-[0.72em]">2,preMB</sub>
               <span className="mx-1 not-italic">−</span>
-              SaO<sub className="text-[0.72em]">2,art</sub>
+              SvO<sub className="text-[0.72em]">2</sub>
             </span>
             <span className="w-full border-t-2 border-slate-400" aria-hidden />
             <span className="px-2 pt-1 text-center leading-tight">
               SaO<sub className="text-[0.72em]">2,postMB</sub>
               <span className="mx-1 not-italic">−</span>
-              SaO<sub className="text-[0.72em]">2,preMB</sub>
+              SvO<sub className="text-[0.72em]">2</sub>
             </span>
           </div>
           <span className="font-medium text-slate-500">× 100</span>
           <span className="text-sm text-slate-500">(%)</span>
         </div>
         <p className="mt-3 max-w-xl text-center text-[11px] leading-relaxed text-slate-600">
-          Donde SaO<sub className="text-[0.85em]">2,preMB</sub> es la saturación venosa de entrada al
-          oxigenador, SaO<sub className="text-[0.85em]">2,postMB</sub> la del retorno oxigenado y SaO
-          <sub className="text-[0.85em]">2,art</sub> la arterial del paciente.
+          Donde SaO<sub className="text-[0.85em]">2,preMB</sub> es la saturación pre-oxigenador, SaO
+          <sub className="text-[0.85em]">2,postMB</sub> la post-membrana del circuito y SvO
+          <sub className="text-[0.85em]">2</sub> la saturación venosa mixta del paciente (arteria
+          pulmonar).
         </p>
       </div>
 
@@ -1130,8 +1131,8 @@ function EcmoRecirculationCalculator() {
 
       {invalidDenominator ? (
         <p className="mt-3 text-[12px] font-medium text-red-700">
-          SaO<sub className="text-[0.85em]">2,postMB</sub> debe ser mayor que SaO
-          <sub className="text-[0.85em]">2,preMB</sub> para un denominador válido.
+          SaO<sub className="text-[0.85em]">2,postMB</sub> debe ser mayor que SvO
+          <sub className="text-[0.85em]">2</sub> para un denominador válido.
         </p>
       ) : null}
 

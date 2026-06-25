@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import {
   Activity,
   AlertCircle,
   ArrowLeft,
+  Cpu,
+  Droplets,
   Gauge,
   HeartPulse,
   Info,
+  Layers,
   Microscope,
   Percent,
   ScanLine,
   ShieldAlert,
   Syringe,
+  Thermometer,
   Waves,
   X,
 } from 'lucide-react'
@@ -24,7 +28,181 @@ import { publicAsset } from '../lib/publicAsset.js'
 
 const SWAN_GANZ_SG_TABLE_HREF = publicAsset('ecmo/SG.html')
 
+const IMG_PICCO_PULSION = publicAsset('monitoring/picco-pulsion-monitor.png')
+const ALT_PICCO_PULSION =
+  'Monitor PulsioFlex con módulo PiCCO (Pulsion): pantalla con CI, GEDVI, ELWI, PVPI, SVRI, onda arterial y tendencias de termodilución y contorno de pulso.'
+
+const IMG_VOLUMEVIEW_EDWARDS = publicAsset('monitoring/volumeview-edwards-monitor.png')
+const ALT_VOLUMEVIEW_EDWARDS =
+  'Interfaz VolumeView (Edwards): esquema cardiopulmonar con GEDI, GEF, ELWI, PVPI, SVV, CI, SVI, ScvO₂, MAP y gauges de estado hemodinámico.'
+
+const IMG_VOLUMEVIEW_MONTAJE = publicAsset('monitoring/volumeview-montaje.png')
+const ALT_VOLUMEVIEW_MONTAJE =
+  'Montaje del sistema VolumeView (Edwards): cánula venosa central, catéter arterial femoral con sensor, manifold termistor, transductor TruWave, data box y plataforma EV1000.'
+
+const PICCO_PARAMETER_GROUPS = [
+  {
+    category: 'Precarga',
+    headerClass: 'bg-blue-50 text-blue-900',
+    rows: [
+      {
+        param: 'GEDVI',
+        name: 'Volumen diastólico global indexado',
+        normal: '680–800 mL/m²',
+        td: true,
+        continuous: false,
+        note: 'Precarga biventricular; más útil que presiones para valorar volumen.',
+      },
+      {
+        param: 'ITBVI',
+        name: 'Volumen intratorácico de sangre indexado',
+        normal: '850–1000 mL/m²',
+        td: true,
+        continuous: false,
+        note: 'Sangre en tórax (corazón + grandes vasos pulmonares).',
+      },
+      {
+        param: 'SVV / PPV',
+        name: 'Variación VS / variación presión de pulso',
+        normal: 'SVV <10–15 % (VM controlada)',
+        td: false,
+        continuous: true,
+        note: 'Respuesta dinámica a volumen; requiere VM controlada y ritmo regular.',
+      },
+    ],
+  },
+  {
+    category: 'Contractilidad',
+    headerClass: 'bg-rose-50 text-rose-900',
+    rows: [
+      {
+        param: 'CI / GC',
+        name: 'Índice / gasto cardíaco',
+        normal: 'IC 2,4–4,0 L/min/m² · GC 3–5 L/min',
+        td: true,
+        continuous: true,
+        note: 'Calibración por termodilución; seguimiento continuo por contorno de pulso.',
+      },
+      {
+        param: 'GEF',
+        name: 'Fracción de eyección global',
+        normal: '25–35 % (orientativo)',
+        td: true,
+        continuous: false,
+        note: 'Relación SV/GEDV; disponible en VolumeView tras termodilución.',
+      },
+      {
+        param: 'dPmx / CPI',
+        name: 'Contractilidad / potencia cardíaca indexada',
+        normal: 'CPI >0,5 W/m² (orientativo)',
+        td: false,
+        continuous: true,
+        note: 'Proxies hemodinámicos; interpretar con cautela en soporte mecánico.',
+      },
+    ],
+  },
+  {
+    category: 'Postcarga',
+    headerClass: 'bg-violet-50 text-violet-900',
+    rows: [
+      {
+        param: 'SVRI',
+        name: 'Índice de resistencia vascular sistémica',
+        normal: '1700–2400 dyn·s·cm⁻⁵·m²',
+        td: false,
+        continuous: true,
+        note: 'Derivado del contorno de pulso entre calibraciones.',
+      },
+    ],
+  },
+  {
+    category: 'Pulmón',
+    headerClass: 'bg-cyan-50 text-cyan-900',
+    rows: [
+      {
+        param: 'ELWI',
+        name: 'Agua pulmonar extravascular indexada',
+        normal: '3–7 mL/kg peso ideal',
+        td: true,
+        continuous: false,
+        note: 'Congestión pulmonar / edema; >10 sugiere edema relevante.',
+      },
+      {
+        param: 'PVPI',
+        name: 'Índice de permeabilidad vascular pulmonar',
+        normal: '1,0–3,0',
+        td: true,
+        continuous: false,
+        note: 'ELWI/GEDVI; ayuda a distinguir permeabilidad vs hidrostático.',
+      },
+    ],
+  },
+]
+
+/** Fiabilidad del parámetro PiCCO/VolumeView según soporte: high | medium | none */
+const PICCO_SUPPORT_RELIABILITY_ROWS = [
+  { category: 'Precarga', param: 'GEDVI', biac: 'high', ecmoVv: 'high', ecmoVa: 'high', impella: 'high' },
+  { category: 'Precarga', param: 'ITBVI', biac: 'high', ecmoVv: 'medium', ecmoVa: 'medium', impella: 'medium' },
+  { category: 'Precarga', param: 'SVV / PPV', biac: 'none', ecmoVv: 'medium', ecmoVa: 'none', impella: 'none' },
+  { category: 'Contractilidad', param: 'CI / GC', biac: 'medium', ecmoVv: 'medium', ecmoVa: 'none', impella: 'medium' },
+  { category: 'Contractilidad', param: 'GEF', biac: 'medium', ecmoVv: 'medium', ecmoVa: 'medium', impella: 'medium' },
+  { category: 'Contractilidad', param: 'dPmx / CPI', biac: 'none', ecmoVv: 'none', ecmoVa: 'none', impella: 'none' },
+  { category: 'Postcarga', param: 'SVRI', biac: 'none', ecmoVv: 'medium', ecmoVa: 'none', impella: 'none' },
+  { category: 'Pulmón', param: 'ELWI', biac: 'high', ecmoVv: 'high', ecmoVa: 'high', impella: 'high' },
+  { category: 'Pulmón', param: 'PVPI', biac: 'high', ecmoVv: 'high', ecmoVa: 'high', impella: 'high' },
+]
+
+const PICCO_RELIABILITY_CELL = {
+  high: {
+    label: 'Muy fiable',
+    className: 'bg-emerald-100 font-bold text-emerald-950 ring-1 ring-inset ring-emerald-200',
+  },
+  medium: {
+    label: 'Menos fiable',
+    className: 'bg-amber-100 font-semibold text-amber-950 ring-1 ring-inset ring-amber-200',
+  },
+  none: {
+    label: 'No fiable',
+    className: 'bg-red-100 font-semibold text-red-950 ring-1 ring-inset ring-red-200',
+  },
+}
+
+function PiccoReliabilityCell({ level }) {
+  const cfg = PICCO_RELIABILITY_CELL[level]
+  return (
+    <td className="px-2 py-2 text-center">
+      <span
+        className={`inline-block min-w-[5.5rem] rounded-lg px-2 py-1 text-[10px] leading-tight ${cfg.className}`}
+      >
+        {cfg.label}
+      </span>
+    </td>
+  )
+}
+
+const PICCO_SUPPORT_NOTES = [
+  {
+    title: 'BIAC',
+    text: 'Priorizar termodilución (GEDVI, ELWI). Recalibrar tras cambiar relación de asistencia.',
+  },
+  {
+    title: 'ECMO VV',
+    text: 'CI refleja circulación nativa, no flujo ECMO total. SVV/PPV solo con VM controlada y sin arritmias.',
+  },
+  {
+    title: 'ECMO VA',
+    text: 'ELWI y GEDVI muy útiles para congestión y distensión del VI. Evitar contorno de pulso continuo.',
+  },
+  {
+    title: 'Impella',
+    text: 'Termodilución para volúmenes y ELWI; contorno de pulso invalidado mientras la bomba esté activa.',
+  },
+]
+
 export function MethodsView({ selectedMethod, setSelectedMethod }) {
+  if (selectedMethod === 'picco') {
+    return <PiccoVolumeViewDetailView onBack={() => setSelectedMethod(null)} />
+  }
   if (selectedMethod === 'swan') {
     return <SwanGanzDetailView onBack={() => setSelectedMethod(null)} />
   }
@@ -58,7 +236,7 @@ export function MethodsView({ selectedMethod, setSelectedMethod }) {
           description="Termodilución transpulmonar y volumen preload."
           parameters={['GEDI', 'ELWI', 'GCc']}
           color="border-emerald-500"
-          disabled
+          onClick={() => setSelectedMethod('picco')}
         />
         <MethodCard
           title="Vigileo (FloTrac)"
@@ -88,6 +266,426 @@ export function MethodsView({ selectedMethod, setSelectedMethod }) {
           disabled
         />
       </div>
+    </div>
+  )
+}
+
+function PiccoVolumeViewDetailView({ onBack }) {
+  const [lightbox, setLightbox] = useState(null)
+
+  useEffect(() => {
+    if (!lightbox) return
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightbox(null)
+    }
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [lightbox])
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-10 pb-20">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-4 flex items-center gap-2 text-xs font-bold tracking-wide text-blue-600 uppercase hover:text-blue-800"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Volver a técnicas
+      </button>
+
+      <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm">
+        <div className="bg-gradient-to-br from-emerald-700 to-teal-900 p-10 text-white">
+          <h2 className="flex flex-col items-center gap-4 text-3xl font-black tracking-tighter uppercase md:flex-row md:items-center md:justify-start">
+            <Gauge size={40} className="text-emerald-200" aria-hidden />
+            PiCCO / VolumeView
+          </h2>
+          <p className="mt-4 max-w-3xl text-sm leading-relaxed font-medium text-emerald-100">
+            Monitorización hemodinámica avanzada por{' '}
+            <strong className="text-white">termodilución transpulmonar (TDTP)</strong> y análisis
+            continuo del <strong className="text-white">contorno de pulso arterial</strong>. Requiere
+            catéter arterial (habitual femoral) con termistor y acceso venoso central para el bolo de
+            indicador.
+          </p>
+        </div>
+
+        <div className="space-y-12 p-8 md:p-10">
+          <section>
+            <SectionHeader title="Montaje VolumeView (Edwards)" icon={Syringe} />
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+              Esquema del <strong className="text-slate-900">montaje del sistema VolumeView</strong>:
+              acceso venoso central para el bolo de termodilución, catéter arterial femoral con sensor,
+              transductor de presión y conexión a la plataforma EV1000.
+            </p>
+            <figure className="mt-5">
+              <button
+                type="button"
+                onClick={() =>
+                  setLightbox({ src: IMG_VOLUMEVIEW_MONTAJE, alt: ALT_VOLUMEVIEW_MONTAJE })
+                }
+                className="group flex w-full cursor-zoom-in justify-center overflow-hidden rounded-2xl border border-teal-200 bg-white p-4 shadow-inner transition hover:ring-2 hover:ring-teal-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                aria-label="Ampliar esquema de montaje VolumeView"
+              >
+                <img
+                  src={IMG_VOLUMEVIEW_MONTAJE}
+                  alt=""
+                  className="max-h-[min(70vh,520px)] w-auto max-w-full object-contain"
+                  loading="lazy"
+                />
+              </button>
+              <figcaption className="mt-3 text-center text-[11px] leading-relaxed text-slate-600">
+                Sensor VolumeView, cánula femoral arterial, manifold termistor, vía venosa central,
+                transductor TruWave, data box y monitor EV1000.{' '}
+                <span className="font-medium text-teal-700">Pulsa para ampliar.</span>
+              </figcaption>
+            </figure>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader title="Consolas PiCCO y VolumeView" icon={ScanLine} />
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+              Referencia visual de las interfaces de monitor. Pulsa cada miniatura para verla en grande.
+            </p>
+            <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <figure className="flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightbox({ src: IMG_PICCO_PULSION, alt: ALT_PICCO_PULSION })
+                  }
+                  className="group flex h-36 w-full max-w-xs cursor-zoom-in items-center justify-center overflow-hidden rounded-xl border border-emerald-200 bg-slate-50 p-2 shadow-inner transition hover:ring-2 hover:ring-emerald-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:h-40"
+                  aria-label="Ampliar monitor PiCCO Pulsion"
+                >
+                  <img
+                    src={IMG_PICCO_PULSION}
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                    loading="lazy"
+                  />
+                </button>
+                <figcaption className="mt-2 max-w-xs text-center text-[10px] leading-snug text-slate-600">
+                  <strong className="text-emerald-900">PiCCO · Pulsion</strong> — PulsioFlex y módulo
+                  PiCCO. <span className="font-medium text-emerald-700">Ampliar</span>
+                </figcaption>
+              </figure>
+              <figure className="flex flex-col items-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightbox({ src: IMG_VOLUMEVIEW_EDWARDS, alt: ALT_VOLUMEVIEW_EDWARDS })
+                  }
+                  className="group flex h-36 w-full max-w-xs cursor-zoom-in items-center justify-center overflow-hidden rounded-xl border border-teal-200 bg-slate-50 p-2 shadow-inner transition hover:ring-2 hover:ring-teal-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:h-40"
+                  aria-label="Ampliar interfaz VolumeView Edwards"
+                >
+                  <img
+                    src={IMG_VOLUMEVIEW_EDWARDS}
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                    loading="lazy"
+                  />
+                </button>
+                <figcaption className="mt-2 max-w-xs text-center text-[10px] leading-snug text-slate-600">
+                  <strong className="text-teal-900">VolumeView · Edwards</strong> — pantalla con
+                  parámetros y semáforos. <span className="font-medium text-teal-700">Ampliar</span>
+                </figcaption>
+              </figure>
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader title="Cómo funciona" icon={HeartPulse} />
+            <div className="mt-4 grid gap-6 md:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 text-sm leading-relaxed text-slate-700">
+                <p className="font-bold text-emerald-950">1 · Termodilución transpulmonar (intermitente)</p>
+                <p className="mt-2">
+                  Se inyecta un <strong>bolo de suero frío</strong> (típicamente 15 mL) por vía venosa
+                  central. El indicador atraviesa el corazón derecho, pulmón y corazón izquierdo hasta
+                  detectarse en el <strong>termistor del catéter arterial</strong> (curva de dilución
+                  transpulmonar).
+                </p>
+                <p className="mt-2">
+                  A partir de la forma y el área bajo la curva se calculan{' '}
+                  <strong>gasto cardíaco</strong>, <strong>volumen diastólico global (GEDV)</strong>,{' '}
+                  <strong>volumen intratorácico de sangre (ITBV)</strong> y{' '}
+                  <strong>agua pulmonar extravascular (EVLW)</strong>.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5 text-sm leading-relaxed text-slate-700">
+                <p className="font-bold text-teal-950">2 · Contorno de pulso (continuo)</p>
+                <p className="mt-2">
+                  Tras cada calibración por termodilución, el sistema analiza la{' '}
+                  <strong>onda de presión arterial</strong> para estimar de forma continua el gasto,
+                  variaciones del volumen sistólico (SVV), resistencias y proxies de contractilidad.
+                </p>
+                <p className="mt-2">
+                  La precisión del modo continuo depende de la{' '}
+                  <strong>calidad de la onda</strong>, la frecuencia de recalibración y las condiciones
+                  del paciente (ritmo, asistencia mecánica, etc.).
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader title="Qué es la termodilución" icon={Thermometer} />
+            <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-700">
+              <p>
+                La <strong>termodilución</strong> cuantifica el gasto cardíaco midiendo el cambio de
+                temperatura sanguínea tras inyectar un volumen conocido de fluido a temperatura distinta
+                (habitualmente <strong>suero a 0–4 °C</strong>).
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wide text-blue-900">
+                    Swan-Ganz (pulmonar)
+                  </p>
+                  <p className="mt-2 text-[13px]">
+                    Bolo en vía proximal del CAP; termistor en arteria pulmonar. Mide el gasto que pasa
+                    por la AP.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                  <p className="text-xs font-black uppercase tracking-wide text-emerald-900">
+                    PiCCO / VolumeView (transpulmonar)
+                  </p>
+                  <p className="mt-2 text-[13px]">
+                    Bolo en vía central; termistor en <strong>arteria femoral</strong>. El indicador
+                    cruza pulmón y permite estimar también{' '}
+                    <strong>volúmenes y agua extravascular pulmonar</strong>.
+                  </p>
+                </div>
+              </div>
+              <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-[13px]">
+                En la práctica se realizan <strong>3 bolos consecutivos</strong> (descartando el primero
+                si el protocolo lo indica) y se promedia. Repetir tras cambios hemodinámicos relevantes,
+                reorientación del paciente o intervenciones (líquidos, vasopresores, soporte mecánico).
+              </p>
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader title="Parámetros, método de medición y valores normales" icon={Layers} />
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+              Referencia orientativa para adultos; contrastar con protocolo del servicio y versión del
+              monitor (PiCCO, VolumeView).
+            </p>
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-inner">
+              <table className="w-full min-w-[920px] border-collapse text-left text-[12px] text-slate-800">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-600">
+                    <th className="px-3 py-2.5">Sigla</th>
+                    <th className="px-3 py-2.5">Parámetro</th>
+                    <th className="px-3 py-2.5">Referencia</th>
+                    <th className="px-3 py-2.5 text-center">TDTP</th>
+                    <th className="px-3 py-2.5 text-center">Continuo</th>
+                    <th className="px-3 py-2.5">Notas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {PICCO_PARAMETER_GROUPS.map((group) => (
+                    <Fragment key={group.category}>
+                      <tr className={group.headerClass}>
+                        <td
+                          colSpan={6}
+                          className="px-3 py-2 text-[11px] font-black uppercase tracking-wide"
+                        >
+                          {group.category}
+                        </td>
+                      </tr>
+                      {group.rows.map((row) => (
+                        <tr key={row.param} className="bg-white align-top">
+                          <td className="px-3 py-2.5 font-mono font-bold text-emerald-900">
+                            {row.param}
+                          </td>
+                          <td className="px-3 py-2.5 font-medium">{row.name}</td>
+                          <td className="px-3 py-2.5 whitespace-nowrap text-slate-600">
+                            {row.normal}
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            {row.td ? (
+                              <span className="font-bold text-emerald-700">✓</span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            {row.continuous ? (
+                              <span className="font-bold text-teal-700">✓</span>
+                            ) : (
+                              <span className="text-slate-300">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 leading-snug text-slate-600">{row.note}</td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-[11px] italic text-slate-500">
+              TDTP = termodilución transpulmonar (bolo frío). Continuo = análisis del contorno de pulso
+              entre calibraciones.
+            </p>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader
+              title="Termodilución vs monitorización continua"
+              icon={Droplets}
+            />
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
+                <h4 className="text-xs font-black uppercase tracking-wide text-emerald-900">
+                  Con termodilución (bolo)
+                </h4>
+                <ul className="mt-3 list-inside list-disc space-y-1.5 text-[13px] leading-snug text-slate-700">
+                  <li>CI / GC</li>
+                  <li>GEDV / GEDVI</li>
+                  <li>ITBV / ITBVI</li>
+                  <li>EVLW / ELWI</li>
+                  <li>PVPI</li>
+                  <li>Calibración del algoritmo de contorno de pulso</li>
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-teal-200 bg-teal-50/50 p-5">
+                <h4 className="text-xs font-black uppercase tracking-wide text-teal-900">
+                  De forma continua (entre bolos)
+                </h4>
+                <ul className="mt-3 list-inside list-disc space-y-1.5 text-[13px] leading-snug text-slate-700">
+                  <li>CCI / SV / SVI</li>
+                  <li>SVV y PPV (respuesta dinámica a volumen)</li>
+                  <li>SVR / SVRI</li>
+                  <li>dPmx, CPI (contractilidad / potencia)</li>
+                  <li>Tendencias de gasto y poscarga</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200 pt-10">
+            <SectionHeader title="Uso con soporte mecánico circulatorio" icon={Cpu} />
+            <p className="mt-3 text-[13px] leading-relaxed text-slate-600">
+              Fiabilidad orientativa de cada parámetro según el dispositivo de soporte. La termodilución
+              suele mantener más valor que el contorno de pulso continuo cuando la onda arterial está
+              alterada. Combinar siempre con eco y contexto clínico.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wide">
+              <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-emerald-950 ring-1 ring-emerald-200">
+                Muy fiable
+              </span>
+              <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-amber-950 ring-1 ring-amber-200">
+                Menos fiable
+              </span>
+              <span className="rounded-lg bg-red-100 px-2.5 py-1 text-red-950 ring-1 ring-red-200">
+                No fiable
+              </span>
+            </div>
+
+            <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-inner">
+              <table className="w-full min-w-[760px] border-collapse text-left text-[12px] text-slate-800">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-wide text-slate-600">
+                    <th className="px-3 py-2.5">Categoría</th>
+                    <th className="px-3 py-2.5">Parámetro</th>
+                    <th className="px-2 py-2.5 text-center">BIAC</th>
+                    <th className="px-2 py-2.5 text-center">ECMO VV</th>
+                    <th className="px-2 py-2.5 text-center">ECMO VA</th>
+                    <th className="px-2 py-2.5 text-center">Impella</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {PICCO_SUPPORT_RELIABILITY_ROWS.map((row) => (
+                    <tr key={row.param} className="bg-white align-middle">
+                      <td className="px-3 py-2.5 text-[11px] font-semibold text-slate-500">
+                        {row.category}
+                      </td>
+                      <td className="px-3 py-2.5 font-mono font-bold text-slate-900">{row.param}</td>
+                      <PiccoReliabilityCell level={row.biac} />
+                      <PiccoReliabilityCell level={row.ecmoVv} />
+                      <PiccoReliabilityCell level={row.ecmoVa} />
+                      <PiccoReliabilityCell level={row.impella} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {PICCO_SUPPORT_NOTES.map((note) => (
+                <p
+                  key={note.title}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[12px] leading-relaxed text-slate-700"
+                >
+                  <strong className="text-slate-900">{note.title}:</strong> {note.text}
+                </p>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 gap-6 border-t border-slate-200 pt-10 md:grid-cols-2">
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-6">
+              <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-amber-800">
+                <AlertCircle size={16} aria-hidden />
+                Limitaciones generales
+              </h4>
+              <ul className="mt-3 list-inside list-disc space-y-2 text-xs leading-relaxed text-amber-950/90">
+                <li>Arritmias: invalidan SVV/PPV y pueden alterar curvas de termodilución.</li>
+                <li>TEP o shunts importantes: distorsionan volúmenes pulmonares y EVLW.</li>
+                <li>Fugas aórticas, IM severa o IA: afectan el contorno de pulso.</li>
+                <li>Recalibrar tras líquidos, cambios de PEEP, posición o soporte mecánico.</li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-700">
+                <Info size={16} aria-hidden />
+                Requisitos técnicos
+              </h4>
+              <ul className="mt-3 list-inside list-disc space-y-2 text-xs leading-relaxed text-slate-700">
+                <li>Catéter arterial con termistor (femoral recomendado en muchos protocolos).</li>
+                <li>Vía venosa central para bolos (misma vía y técnica estandarizada).</li>
+                <li>Transductor arterial calibrado y fast flush correcto.</li>
+                <li>Evitar bolos durante cambios bruscos de vasopresores o VM.</li>
+              </ul>
+            </div>
+          </section>
+
+          <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center text-[11px] leading-relaxed text-slate-600">
+            Contenido educativo. PiCCO y VolumeView son marcas de Pulsion/Getinge; seguir IFU y protocolo
+            de monitorización hemodinámica de tu hospital.
+          </p>
+        </div>
+      </div>
+
+      {lightbox ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista ampliada"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-[2px]"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightbox(null)}
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+            aria-label="Cerrar"
+          >
+            <X size={28} strokeWidth={2} aria-hidden />
+          </button>
+          <img
+            src={lightbox.src}
+            alt={lightbox.alt}
+            className="max-h-[min(92vh,900px)] max-w-full object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </div>
   )
 }
