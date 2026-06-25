@@ -290,6 +290,7 @@ const MENU_CARD_THEMES = {
   red: { iconWrap: 'bg-red-50 text-red-600', footer: 'bg-red-600' },
   violet: { iconWrap: 'bg-violet-50 text-violet-600', footer: 'bg-violet-600' },
   amber: { iconWrap: 'bg-amber-50 text-amber-700', footer: 'bg-amber-600' },
+  teal: { iconWrap: 'bg-teal-50 text-teal-600', footer: 'bg-teal-600' },
 }
 
 export function MenuCard({ onClick, icon: Icon, title, desc, theme = 'blue' }) {

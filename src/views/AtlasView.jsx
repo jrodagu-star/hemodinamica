@@ -9,12 +9,14 @@ import {
   Layers,
   ListOrdered,
   ScanHeart,
+  Wind,
   X,
   Zap,
 } from 'lucide-react'
 import { atlasParameters } from '../data/atlasParameters.js'
 import { publicAsset } from '../lib/publicAsset.js'
 import { FilterBtn, MenuCard, SectionHeader } from '../components/ui.jsx'
+import { EcmoVvShuntCalculatorView } from './EcmoVvShuntCalculatorView.jsx'
 
 const TABLA_PRECARGA_DIN = encodeURI(publicAsset('tabla precarga.png'))
 
@@ -64,6 +66,9 @@ export function AtlasView({ selectedTopic, setSelectedTopic }) {
   if (selectedTopic === 'cardiogenicShock') {
     return <CardiogenicShockDetail onBack={() => setSelectedTopic(null)} />
   }
+  if (selectedTopic === 'shuntCalc') {
+    return <EcmoVvShuntCalculatorView onBack={() => setSelectedTopic(null)} />
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-12 pb-20 pt-4 text-center">
@@ -104,6 +109,13 @@ export function AtlasView({ selectedTopic, setSelectedTopic }) {
           title="Shock cardiogénico"
           desc="Perfil hemodinámico, INTERMACS, criterios y tratamiento."
           theme="amber"
+        />
+        <MenuCard
+          onClick={() => setSelectedTopic('shuntCalc')}
+          icon={Wind}
+          title="Cálculo de shunt"
+          desc="Shunt intrapulmonar y tejido pulmonar funcional en ECMO VV."
+          theme="teal"
         />
       </div>
     </div>
