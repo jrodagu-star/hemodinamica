@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   BookOpen,
   ExternalLink,
@@ -951,6 +952,164 @@ const RECIRCULATION_TONE_CLASS = {
   emerald: 'border-emerald-300 bg-emerald-50 text-emerald-950',
   amber: 'border-amber-300 bg-amber-50 text-amber-950',
   red: 'border-red-300 bg-red-50 text-red-950',
+}
+
+function EcmoRecirculationSuspicionPanel() {
+  return (
+    <div className="mt-4 overflow-hidden rounded-2xl border border-sky-300/90 bg-white shadow-sm">
+      <div className="border-b border-sky-100 bg-gradient-to-r from-sky-100/90 to-sky-50 px-4 py-3 md:px-5">
+        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-sky-950">
+          <AlertTriangle size={15} className="shrink-0 text-amber-600" aria-hidden />
+          Cuándo sospechar recirculación
+        </p>
+      </div>
+
+      <div className="grid gap-4 p-4 md:grid-cols-2 md:p-5">
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50/90 to-white p-4">
+          <p className="text-center text-[10px] font-black uppercase tracking-wide text-amber-900">
+            Señal 1 · Contradicción de oxigenación
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-2 sm:gap-3">
+            <div className="flex min-w-0 flex-1 flex-col items-center rounded-xl border-2 border-sky-300 bg-sky-50 px-2 py-3 text-center shadow-inner sm:px-3">
+              <span className="rounded-full bg-sky-200/80 px-2 py-0.5 text-[9px] font-black uppercase text-sky-900">
+                Circuito
+              </span>
+              <span className="mt-2 font-mono text-sm font-black text-sky-950">pO₂</span>
+              <span className="text-[10px] font-semibold text-sky-800">premembrana</span>
+              <span className="mt-2 flex items-center gap-0.5 text-lg font-black text-sky-700">
+                <ArrowUp size={16} strokeWidth={3} aria-hidden />
+                alta
+              </span>
+            </div>
+            <div className="flex shrink-0 flex-col items-center gap-1">
+              <span
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-lg font-black text-white shadow-md"
+                aria-hidden
+              >
+                &gt;
+              </span>
+              <AlertTriangle size={14} className="text-amber-600" aria-hidden />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col items-center rounded-xl border-2 border-slate-200 bg-slate-50 px-2 py-3 text-center sm:px-3">
+              <span className="rounded-full bg-slate-200/80 px-2 py-0.5 text-[9px] font-black uppercase text-slate-700">
+                Paciente
+              </span>
+              <span className="mt-2 font-mono text-sm font-black text-slate-800">pO₂</span>
+              <span className="text-[10px] font-semibold text-slate-600">arterial</span>
+              <span className="mt-2 flex items-center gap-0.5 text-lg font-black text-slate-500">
+                <ArrowDown size={16} strokeWidth={3} aria-hidden />
+                baja
+              </span>
+            </div>
+          </div>
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-amber-950">
+            El circuito «ve» mejor oxigenación que la sangre que llega al paciente.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-red-200 bg-gradient-to-b from-red-50/80 to-white p-4">
+          <p className="text-center text-[10px] font-black uppercase tracking-wide text-red-900">
+            Señal 2 · Test dinámico de bomba
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center shadow-sm">
+              <RotateCw className="mx-auto h-7 w-7 text-red-600" strokeWidth={2} aria-hidden />
+              <p className="mt-1 text-[10px] font-bold uppercase text-slate-500">Bomba ECMO</p>
+              <p className="mt-2 flex items-center justify-center gap-1 font-black text-red-700">
+                <ArrowUp size={15} strokeWidth={3} aria-hidden />
+                <span>+ L/min</span>
+              </p>
+            </div>
+            <ArrowRight className="hidden h-5 w-5 shrink-0 text-red-400 sm:block" aria-hidden />
+            <div className="rounded-xl border-2 border-dashed border-red-300 bg-red-50 px-4 py-3 text-center">
+              <p className="text-[10px] font-black uppercase text-red-800">Paradoja</p>
+              <p className="mt-1 text-base font-black text-red-900">Empeora</p>
+              <p className="text-[10px] font-semibold text-red-800">pO₂ arterial paciente</p>
+            </div>
+          </div>
+          <p className="mt-4 text-center text-[11px] leading-relaxed text-red-950">
+            Más flujo favorece que sangre ya oxigenada vuelva al drenaje sin mezclarse de forma útil.
+          </p>
+        </div>
+      </div>
+
+      <div className="border-t border-sky-100 bg-sky-50/50 px-3 py-4 md:px-5">
+        <p className="text-center text-[10px] font-black uppercase tracking-wide text-sky-900">
+          Mecanismo · circuito VV
+        </p>
+        <svg
+          viewBox="0 0 520 150"
+          className="mx-auto mt-3 w-full max-w-lg text-slate-700"
+          role="img"
+          aria-label="Esquema: sangre oxigenada del retorno es reaspirada por la cánula de drenaje antes de mezclarse en la circulación del paciente"
+        >
+          <defs>
+            <marker id="ecmo-flow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" className="text-sky-600" />
+            </marker>
+            <marker id="ecmo-recirc" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" className="text-red-500" />
+            </marker>
+          </defs>
+          <rect x="8" y="52" width="72" height="46" rx="10" fill="#e0f2fe" stroke="#38bdf8" strokeWidth="2" />
+          <text x="44" y="72" textAnchor="middle" className="fill-sky-950 text-[11px] font-bold">
+            Drenaje
+          </text>
+          <text x="44" y="88" textAnchor="middle" className="fill-sky-800 text-[9px]">
+            venoso
+          </text>
+          <line x1="80" y1="75" x2="118" y2="75" stroke="#0284c7" strokeWidth="2.5" markerEnd="url(#ecmo-flow)" />
+          <rect x="120" y="52" width="64" height="46" rx="10" fill="#f1f5f9" stroke="#94a3b8" strokeWidth="2" />
+          <text x="152" y="80" textAnchor="middle" className="fill-slate-800 text-[11px] font-bold">
+            Bomba
+          </text>
+          <line x1="184" y1="75" x2="222" y2="75" stroke="#0284c7" strokeWidth="2.5" markerEnd="url(#ecmo-flow)" />
+          <rect x="224" y="44" width="88" height="62" rx="10" fill="#dcfce7" stroke="#22c55e" strokeWidth="2" />
+          <text x="268" y="68" textAnchor="middle" className="fill-emerald-950 text-[11px] font-bold">
+            Membrana
+          </text>
+          <text x="268" y="84" textAnchor="middle" className="fill-emerald-800 text-[9px] font-semibold">
+            pO₂ ↑
+          </text>
+          <text x="268" y="96" textAnchor="middle" className="fill-emerald-700 text-[8px]">
+            (premembrana)
+          </text>
+          <line x1="312" y1="75" x2="350" y2="75" stroke="#0284c7" strokeWidth="2.5" markerEnd="url(#ecmo-flow)" />
+          <rect x="352" y="52" width="72" height="46" rx="10" fill="#e0f2fe" stroke="#38bdf8" strokeWidth="2" />
+          <text x="388" y="72" textAnchor="middle" className="fill-sky-950 text-[11px] font-bold">
+            Retorno
+          </text>
+          <text x="388" y="88" textAnchor="middle" className="fill-sky-800 text-[9px]">
+            oxigenado
+          </text>
+          <line x1="388" y1="98" x2="388" y2="118" stroke="#0284c7" strokeWidth="2" markerEnd="url(#ecmo-flow)" />
+          <rect x="348" y="120" width="80" height="26" rx="8" fill="#fef3c7" stroke="#f59e0b" strokeWidth="1.5" />
+          <text x="388" y="137" textAnchor="middle" className="fill-amber-950 text-[9px] font-bold">
+            Paciente
+          </text>
+          <path
+            d="M 352 52 Q 268 8 44 52"
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="2.5"
+            strokeDasharray="7 5"
+            markerEnd="url(#ecmo-recirc)"
+          />
+          <text x="200" y="22" textAnchor="middle" className="fill-red-600 text-[10px] font-black">
+            Recirculación
+          </text>
+          <text x="200" y="36" textAnchor="middle" className="fill-red-700 text-[8px]">
+            sangre oxigenada → drenaje
+          </text>
+        </svg>
+        <p className="mx-auto mt-3 max-w-lg text-center text-[11px] leading-relaxed text-slate-600">
+          Parte de la sangre <strong className="text-slate-800">ya oxigenada</strong> es reaspirada por el
+          drenaje: el paciente puede seguir <strong className="text-slate-800">hipoxémico</strong> pese a un
+          flujo ECMO aparentemente adecuado.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 function EcmoRecirculationCalculator() {
@@ -2871,12 +3030,7 @@ function EcmoDetailView({ onBack }) {
                 <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-sky-800">
                   ECMO V–V
                 </p>
-                <p className="mt-4">
-                  Parte de la sangre <strong className="text-slate-900">ya oxigenada</strong> del circuito es
-                  aspirada de nuevo por la cánula de drenaje antes de mezclarse de forma útil: el paciente
-                  puede seguir <strong className="text-slate-900">hipoxémico</strong> a pesar de un flujo de
-                  ECMO aparentemente adecuado.
-                </p>
+                <EcmoRecirculationSuspicionPanel />
                 <EcmoRecirculationCalculator />
                 <p className="mt-4 text-xs font-black uppercase tracking-wide text-sky-950">
                   Cómo confirmar / prevenir (posición)
